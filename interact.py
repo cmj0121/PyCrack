@@ -1,5 +1,6 @@
 #! /usr/bin/env python2
 #! coding: utf-8
+#! coding: big-5
 
 import __builtin__
 import code
@@ -8,10 +9,7 @@ import os
 import sys
 sys.path.append('/home/cmj/junkcode/')
 
-from modules import *
-
-
-class Color:
+class Color(object):
 	normal = "\033[0m"
 	black = "\033[30m"
 	red = "\033[31m"
@@ -27,7 +25,7 @@ class Color:
 	blink = "\033[5m"
 	invert = "\033[7m"
 class Theme(object):
-	banner = "CMJ's Python Interpreter (v1.0)\n" \
+	banner = "CMJ's Python Interpreter (v1.1)\n" \
 			 "CopyRight (c) 2013 [cmj0121@gmail.com]. All rights resolved.\n"
 	ps1 = ">>> "
 	ps2 = "... "
@@ -36,7 +34,7 @@ class Theme(object):
 			theme = self.defaultTheme()
 
 		for key in ("ps1", "ps2", "banner"):
-			setattr(sys, key, "%s%s%s" %(theme[key], getattr(self, key), Color.normal))
+			setattr(sys, key, "\001%s\002%s\001%s\002" %(theme[key], getattr(self, key), Color.normal))
 	def defaultTheme(self):
 		""" Change the theme for the interact interpreter """
 		return {"ps1": "%s%s" %(Color.cyan, Color.bold),"ps2":Color.normal, "banner": Color.yellow}
@@ -64,6 +62,9 @@ def interact():
 	readline.parse_and_bind("tab: complete")
 	readline.parse_and_bind("C-p: complete")
 	code.interact(banner=sys.banner, local=globals())
+def selftest():
+	import doctest
+	doctest.testmod()
 
 if __name__ == "__main__":
 	interact()

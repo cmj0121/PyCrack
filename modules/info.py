@@ -2,6 +2,7 @@
 #! coding: utf-8
 
 import socket
+from modules import sdk
 
 defaultTimeout = 5
 
@@ -15,10 +16,10 @@ def resolveInfo(host):
 	else:
 		ret = {"name": name, "alias": alias, "IP list": ips}
 	return ret
-def ServerInfo(host, port=80):
-	def _ServerInfo(host, port):
+def WebInfo(host, port=80):
+	def ServerInfo(host, port):
 		if not host:
-			return [-1, "Bad Parameter"]
+			return -1, "Bad Parameter"
 		elif host.startswith("http://"):
 			host = host[7:]
 		elif host.startswith("https://"):
@@ -29,24 +30,28 @@ def ServerInfo(host, port=80):
 			addr = socket.gethostbyname(host)
 			sk = socket.create_connection((addr, port), timeout=5)
 			sk.send("TRACE ./ HTML/1.1")
-			ret = sk.recv(1024)
+			ret = (0, sk.recv(1024))
 		except socket.timeout, e:
-			ret = [-1, "Timeout"]
+			ret = (-1, "Timeout")
 		except Exception, e:
 			print Exception(e)
-			ret = [-1, "%s" %Exception(e)]
+			ret = (-1, "%s" %Exception(e))
 		finally:
-			return [0, ret]
+			return ret
+	ret = {}
 
-	st,  ret = _ServerInfo(host, port)
-	if 0 != st:
-		return None, None
+	## Get server info
+	st,  page = _ServerInfo(host, port)
+	if 0 == st:
+		for word in ("nginx", "apache"):
+			if word in page:
+				ret["http server"] = word
 
-	for word in ("nginx", "apache"):
-		if word in ret:
-			return word, ret
-	else:
-		return "Unknow", ret
+	## Get web info
+	web = sdk.wrapGetWebPage(host)
+	ret.update({"header": web.header})
+
+	return ret
 def SSHInfo(host, port=22):
 	_timeout = socket.getdefaulttimeout()
 	socket.setdefaulttimeout(defaultTimeout)
