@@ -4,7 +4,7 @@
 
 import __builtin__
 import code
-import rlcompleter, readline
+import readline
 import os
 import sys
 sys.path.append('/home/cmj/junkcode/')
@@ -43,22 +43,30 @@ def clear():
 	print Color.normal
 	os.system('clear')
 def interact():
-	class Completer(rlcompleter.Completer):
-		def global_matches(self, text):
+	def Completer(text, stat):
+		def global_matches(text):
 			expose = dir(__builtin__) + globals().keys()
 			ret = [n for n in expose if "_" != n[0]]
 			return [n for n in ret if n.startswith(text)]
-
-		def attr_matches(self, text):
+		def attr_matches(text):
 			_pos = text.rfind('.')
 			expr, attr = text[:_pos], text[_pos+1:]
 
 			obj = eval(expr)
 			ret = [n for n in dir(obj) if "_" != n[0]]
 			return ["%s.%s" %(expr, n) for n in ret if n.startswith(attr)]
+		if '.' not in text:
+			ret = global_matches(text)
+		else:
+			ret = attr_matches(text)
+
+		try:
+			return ret[stat]
+		except IndexError:
+			return None
 
 	Theme("default")
-	readline.set_completer(Completer().complete)
+	readline.set_completer(Completer)
 	readline.parse_and_bind("tab: complete")
 	readline.parse_and_bind("C-p: complete")
 	code.interact(banner=sys.banner, local=globals())
