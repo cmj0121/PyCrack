@@ -1,12 +1,14 @@
 #! coding: utf-8
 #! coding: big-5
 __VERSION__ = 1.0
+
+import commands
 import select
 import socket
 import pyte
 import yaml
 from modules import sdk
-
+import time
 socket.setdefaulttimeout(10)
 
 class MatchStr(object):
@@ -14,36 +16,56 @@ class MatchStr(object):
 		self.key, self.line = key, line
 
 class PTTAllPostUser(sdk.PTT):
-	def __init__(self, user, pwd, host=("ptt.cc", 23), nr=100, record="log", start=None):
+	def __init__(self, user, pwd, db_user, db_pwd, host=("ptt.cc", 23), nr=100, record="log", start=None):
 		super(PTTAllPostUser, self).__init__(user, pwd, host)
 		self.gotoAllPost()
 		if start:
 			self._send_("%s\r\n" %start)
 		else:
-			self._send_(self.HOME)
-			
-		while True:
-			ret = []
-			for _ in xrange(nr):
-				try:
-					ret += [self.GetUser(NR=str(_+1))]
-				except Exception, e:
-					print Exception(e)
-					pass
+			self._send_(self.END)
 
-				self._send_(self.DOWN)
-			with open(record, "a") as f:
-				for line in ret:
-					name, alias = line[0].split('(')[0], line[0].split('(')[1]
-					name, alias = name.strip(), alias.strip()[:-1]
-					tmp = "%s | %s | %s | %s | %s | %s"
-					tmp = tmp %(name, alias, line[1], line[2], ",".join(line[3]), ",".join(line[4]))
-					f.write("%s\n" %tmp.encode('utf-8'))
-		
+		while True:
+
+			ret = []
+			if True:
+				cnt = 0			
+				for _ in xrange(nr):
+					try:
+						ret += [self.GetUser(NR=str(_+1))]
+					except Exception, e:
+						print Exception(e)
+						cnt += 1
+						pass
+
+					self._send_(self.UP)
+					time.sleep(0.01)
+					if cnt > 20: return
+
+			if True: ## Store into file
+				with open(record, "w") as f:
+					for line in ret:
+						name, alias = line[0].split('(')[0], line[0].split('(')[1]
+						name, alias = name.strip(), alias.strip()[:-1]
+						now = [n for n in line[1].split(' ') if n][0].split('/')
+						now = "-".join([now[-1]] + now[:-1])
+
+						tmp = "%s&&%s&&%s&&%s&&%s&&%s"
+						tmp = tmp %(name, alias, now, line[2], ",".join(line[3]), ",".join(line[4]))
+						f.write("%s\n" %tmp.encode('utf-8'))
+
+			if True: ## Store into DB
+				shell = r"LOAD DATA LOCAL INFILE '%s' REPLACE into TABLE PTT character set utf8 " \
+						r"fields terminated by '&&' lines terminated by '\n'"
+				shell = shell %(record)
+				st, ret = commands.getstatusoutput('mysql -h ds -u %s -D cmj --password=%s -e "%s"' %(db_user, db_pwd, shell))
+				if st:
+					print "[%d] %s" %(st, ret)
+					break
 	def getCurrentLine(self, token="●"):
-		token = token.decode('utf-8')
+		token = [token.decode('utf-8')]
+		token += [u'\ufffd\ufffd']
 		for line in self.screen.display:
-			if token in line:
+			if token[0] in line or token[1] in line:
 				return line
 		else:
 			self._send_(' ')
@@ -64,6 +86,7 @@ class PTTAllPostUser(sdk.PTT):
 				return None
 		line = self.getCurrentLine()
 		nr, date, name = line[1:7], line[10:15], line[16:29]
+		self.reset()
 		self._send_(self.CTRL_Q)
 
 		## Get precise info
@@ -100,11 +123,11 @@ class PTTAllPostUser(sdk.PTT):
 
 		self._send_(' ')
 		self._recvUntil_(MatchStr("(y)回應".decode('utf-8'), -1), MatchStr("(X)推文".decode('utf-8'), -1))
-		return name, date, last, mails, links
+		return name, date.split(' ')[0], last, mails, links
 		#self.test()
 	def test(self):
 		self._recvUntil_("測試, 不可能停".decode('utf-8'))
-	def show(self, debug=True):
+	def show(self, debug=False):
 		""" Show the screen """
 		if debug:
 			print "====\n%s\n====" %"\n".join(self.screen.display)
