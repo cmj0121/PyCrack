@@ -9,7 +9,6 @@ import pyte
 import yaml
 from modules import sdk
 import time
-socket.setdefaulttimeout(10)
 
 class MatchStr(object):
 	def __init__(self, key, line=None):
@@ -33,7 +32,7 @@ class PTTAllPostUser(sdk.PTT):
 					try:
 						ret += [self.GetUser(NR=str(_+1))]
 					except Exception, e:
-						print Exception(e)
+						#print Exception(e)
 						cnt += 1
 						pass
 
@@ -59,7 +58,7 @@ class PTTAllPostUser(sdk.PTT):
 				shell = shell %(record)
 				st, ret = commands.getstatusoutput('mysql -h ds -u %s -D cmj --password=%s -e "%s"' %(db_user, db_pwd, shell))
 				if st:
-					print "[%d] %s" %(st, ret)
+					#print "[%d] %s" %(st, ret)
 					break
 	def getCurrentLine(self, token="●"):
 		token = [token.decode('utf-8')]
@@ -96,7 +95,7 @@ class PTTAllPostUser(sdk.PTT):
 
 		pos = self.screen.display[1].find("《經濟狀況》".decode('utf-8'))
 		if pos == -1:
-			self.show(debug=True)
+			#self.show(debug=True)
 			self.reset()
 			self._send_(' ')
 			self._recvUntil_(MatchStr("(y)回應".decode('utf-8'), -1), MatchStr("(X)推文".decode('utf-8'), -1))
@@ -112,11 +111,12 @@ class PTTAllPostUser(sdk.PTT):
 		links = [n for n in links if n]
 		mails = [n for n in mails if n]
 	
-		print "%s - %s [%s] [%s]" %(nr, name, date, last)
-		if mails:
-			print "    [%s]" %",".join(mails)
-		if links:
-			print "    [%s]" %",".join(links)
+		if False:
+			print "%s - %s [%s] [%s]" %(nr, name, date, last)
+			if mails:
+				print "    [%s]" %",".join(mails)
+			if links:
+				print "    [%s]" %",".join(links)
 		
 		## FIXME
 		self.screen.reset()
@@ -127,8 +127,10 @@ class PTTAllPostUser(sdk.PTT):
 		#self.test()
 	def test(self):
 		self._recvUntil_("測試, 不可能停".decode('utf-8'))
-	def show(self, debug=False):
-		""" Show the screen """
-		if debug:
-			print "====\n%s\n====" %"\n".join(self.screen.display)
+
+def CaptureAllPostUser(user, pwd, db_user, db_pwd):
+	""" Capture the AllPost User-List """
+	while True:
+		ptt = PTTAllPostUser(user, pwd, db_user, db_pwd)
+		del ptt
 

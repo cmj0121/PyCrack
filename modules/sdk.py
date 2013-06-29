@@ -3,6 +3,7 @@
 import pyte
 import socket
 
+socket.setdefaulttimeout(15)
 class WebReq(object):
 	"""
 		[Int]		Status code
@@ -35,13 +36,15 @@ class PTT(object):
 	END = '\x1b[4~'
 	CTRL_Q = "\x11"
 	CTRL_W = "\x17"
+	CTRL_U = '\x15'
+	DEBUG = False
 
-	def __init__(self, user, pwd, host=("ptt.cc", 23)):
+	def __init__(self, user, pwd, host=("ptt.cc", 23), killReplica=True):
 		self.screen = pyte.Screen(80, 24)
 		self.stream = pyte.Stream()
 
 		self.stream.attach(self.screen)
-		self.login(user, pwd, host)
+		self.login(user, pwd, host, killReplica)
 	def __del__(self):
 		self.sk.close()
 	def _recvUntil_(self, *conditions):
@@ -81,8 +84,6 @@ class PTT(object):
 
 		while True:
 			self._send_(msg)
-			ret = self.sk.recv(1024).decode('big5', 'replace')
-			self.stream.feed(ret)
 			if hasattr(self, "show") and callable(self.show):
 				self.show()
 
@@ -90,6 +91,9 @@ class PTT(object):
 				comp = self.screen.display[cond.line] if cond.line else "\n".join(self.screen.display)
 				if cond.key in comp:
 					return conditions.index(cond)
+
+			ret = self.sk.recv(1024).decode('big5', 'replace')
+			self.stream.feed(ret)
 	def login(self, user, pwd, host, killReplica=True):
 		""" Login policy
 
@@ -106,7 +110,11 @@ class PTT(object):
 		if 0 == self._recvUntil_(repli, conti):
 			self._send_("Y\r\n")
 			self._recvUntil_(MatchStr("請按任意鍵繼續".decode('utf-8')))
-		self._repeatSendUntilRecv_(" ", MatchStr("批踢踢實業坊".decode('utf-8'), 0))
+		self._repeatSendUntilRecv_(" ", MatchStr("(G)oodbye".decode('utf-8')))
+	def show(self):
+		""" Show the screen """
+		if self.DEBUG:
+			print "====\n%s\n====" %"\n".join(self.screen.display)
 def wrapGetWebPage(url, port=80):
 	"""
 	Get the web page by wrap function.
