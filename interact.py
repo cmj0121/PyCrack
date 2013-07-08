@@ -9,6 +9,8 @@ import os
 import sys
 sys.path.append('/home/cmj/junkcode/')
 
+filterLevel = "public"
+
 class Color(object):
 	normal = "\033[0m"
 	black = "\033[30m"
@@ -44,16 +46,27 @@ def clear():
 	os.system('clear')
 def interact():
 	def Completer(text, stat):
+		def filterLv(key):
+			global filterLevel
+
+			if "private" == filterLevel:
+				return True
+			elif "protect" == filterLevel:
+				if key.startswith("__") and key.endswith("__"): return False
+				else: return True
+			else:
+				if "_" in key[0]: return False
+				else: return True
 		def global_matches(text):
 			expose = dir(__builtin__) + globals().keys()
-			ret = [n for n in expose if "_" != n[0]]
+			ret = filter(filterLv, expose)
 			return [n for n in ret if n.startswith(text)]
 		def attr_matches(text):
 			_pos = text.rfind('.')
 			expr, attr = text[:_pos], text[_pos+1:]
 
 			obj = eval(expr)
-			ret = [n for n in dir(obj) if "_" != n[0]]
+			ret = filter(filterLv, dir(obj))
 			return ["%s.%s" %(expr, n) for n in ret if n.startswith(attr)]
 		if '.' not in text:
 			ret = global_matches(text)
