@@ -68,7 +68,14 @@ def interact():
 			obj = eval(expr)
 			ret = filter(filterLv, dir(obj))
 			return ["%s.%s" %(expr, n) for n in ret if n.startswith(attr)]
-		if '.' not in text:
+		def path_matches(text):
+			path = [n for n in text.split('/')]
+			path, attr = "%s/" %"/".join(path[:-1]), path[-1]
+
+			return ["%s%s" %(path, n) for n in os.listdir(path) if n.startswith(attr)]
+		if text.startswith('.') or text.startswith('/'):
+			ret = path_matches(text)
+		elif '.' not in text:
 			ret = global_matches(text)
 		else:
 			ret = attr_matches(text)
@@ -79,6 +86,8 @@ def interact():
 			return None
 
 	Theme("default")
+	delims = readline.get_completer_delims().replace('/','')
+	readline.set_completer_delims(delims)
 	readline.set_completer(Completer)
 	readline.parse_and_bind("tab: complete")
 	readline.parse_and_bind("C-p: complete")
