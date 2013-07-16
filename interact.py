@@ -10,6 +10,7 @@ import sys
 sys.path.append('/home/cmj/junkcode/')
 
 filterLevel = "public"
+CURRENT_JOB = []
 
 class Color(object):
 	normal = "\033[0m"
@@ -95,6 +96,56 @@ def interact():
 def selftest():
 	import doctest
 	doctest.testmod()
+def Robust(func):
+	def wrapper(*args, **kwargs):
+		while True:
+			try:
+				func(*args, **kwargs)
+			except KeyboardInterrupt:
+				continue
+
+	wrapper.func_name = func.func_name
+	globals()['Robust%s' %func.func_name] = wrapper
+	return func
+def job(*jobList):
+	from multiprocessing import Process
+	from getpass import getpass
+	global CURRENT_JOB
+
+	pid = []
+	for obj in jobList:
+		while True:
+			if callable(obj):
+				print "Do you run %s [y/N]" %(obj.func_name)
+			else:
+				print "Do you run %s [y/N]" %(obj)
+			ans = raw_input(sys.ps2).upper()
+			if ans[0] not in ('Y', 'N', ''):
+				continue
+
+			if not ans: ans = 'N'
+			break
+		if "N" == ans[0]: continue
+
+		func = eval(obj) if isinstance(obj, str) else obj
+		_parm = func.func_doc
+		_parm = [n for n in _parm.split('\n') if n.strip().startswith('@')]
+		parm = {}
+		for n in _parm:
+			key = n.split(':')
+			key, value = key[0].strip()[1:], ":".join(key[1:]).strip()
+			value = "%s%s: " %(sys.ps2, value)
+			parm[key] = getpass(value) if "Password" in value.title() else raw_input(value)
+
+			if not parm[key] and '(' in value:
+				parm[key] = value.split('(')[-1].split(')')[0]
+
+		p = Process(target=func, kwargs=parm)
+		p.start()
+		pid += [(obj, p)]
+
+	CURRENT_JOB += pid
+	return pid
 
 if __name__ == "__main__":
 	interact()
