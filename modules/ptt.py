@@ -3,12 +3,23 @@
 __VERSION__ = 1.0
 
 import commands
-from modules import sdk
-import time
-import tempfile
 import pyte
 import socket
+import time
+import tempfile
 
+def Robust(func):
+	def wrapper(*args, **kwargs):
+		while True:
+			try:
+				func(*args, **kwargs)
+			except KeyboardInterrupt:
+				continue
+
+	wrapper.func_name = func.func_name
+	wrapper.func_doc  = func.func_doc
+	globals()['Robust%s' %func.func_name] = wrapper
+	return func
 class MatchStr(object):
 	def __init__(self, key, line=None):
 		self.key, self.line = key, line
@@ -27,7 +38,7 @@ class PTT(object):
 
 	def __init__(self, user, pwd, host=("ptt.cc", 23), killReplica=True):
 		self._timeout = socket.getdefaulttimeout()
-		socket.setdefaulttimeout(self.TIMEOUT)
+		socket.setdefaulttimeout(float(self.TIMEOUT))
 
 		self.screen = pyte.Screen(80, 24)
 		self.stream = pyte.Stream()
@@ -118,7 +129,7 @@ class PTTAllPostUser(PTT):
 		self.start	= kwargs['start'] if 'start' in kwargs else None
 		self.db_usr	= kwargs['db_usr'] if 'db_usr' in kwargs else None
 		self.db_pwd	= kwargs['db_pwd'] if 'db_pwd' in kwargs else None
-		if 'timeout' in kwargs: self.TIMEOUT = kwargs['timeout']
+		if 'timeout' in kwargs: self.TIMEOUT = int(kwargs['timeout'])
 
 		super(PTTAllPostUser, self).__init__(user, pwd, host)
 		self.gotoAllPost()
@@ -162,7 +173,7 @@ class PTTAllPostUser(PTT):
 				shell = r"LOAD DATA LOCAL INFILE '%s' REPLACE into TABLE PTT "\
 						r"character set utf8 " \
 						r"fields terminated by '&&' lines terminated by '\n'"
-				shell = shell %(record)
+				shell = shell %(f.name)
 				cmd = 'mysql -h ds -u %s -D cmj --password=%s -e "%s"'
 				cmd = cmd %(self.db_usr, self.db_pwd, shell)
 				st, ret = commands.getstatusoutput(cmd)
@@ -235,7 +246,6 @@ class PTTAllPostUser(PTT):
 	def test(self):
 		self._recvUntil_("測試, 不可能停".decode('utf-8'))
 class PTTOnlineUser(PTT):
-	DEBUG = 10
 	def __init__(self, **kwargs):
 		user	= kwargs['usr']
 		pwd		= kwargs['pwd']
@@ -244,7 +254,7 @@ class PTTOnlineUser(PTT):
 		self.start	= kwargs['start'] if 'start' in kwargs else None
 		self.db_usr	= kwargs['db_usr'] if 'db_usr' in kwargs else None
 		self.db_pwd	= kwargs['db_pwd'] if 'db_pwd' in kwargs else None
-		if 'timeout' in kwargs: self.TIMEOUT = kwargs['timeout']
+		if 'timeout' in kwargs: self.TIMEOUT = int(kwargs['timeout'])
 
 		super(PTTOnlineUser, self).__init__(user, pwd, host)
 		self.gotoOnlineUser()
@@ -286,7 +296,7 @@ class PTTOnlineUser(PTT):
 				shell = r"LOAD DATA LOCAL INFILE '%s' REPLACE into TABLE PTT "\
 						r"character set utf8 " \
 						r"fields terminated by '&&' lines terminated by '\n'"
-				shell = shell %(record)
+				shell = shell %(f.name)
 				cmd = 'mysql -h ds -u %s -D cmj --password=%s -e "%s"'
 				cmd = cmd %(self.db_usr, self.db_pwd, shell)
 				st, ret = commands.getstatusoutput(cmd)
@@ -355,27 +365,27 @@ class PTTOnlineUser(PTT):
 	def test(self):
 		self._recvUntil_("測試, 不可能停".decode('utf-8'))
 
-@sdk.Robust
-def CaptureAllPostUser(**kwargs):
+@Robust
+def AllPostUser(**kwargs):
 	"""
 	@usr:		User
 	@pwd:		Password
-	@db_usr		DB User
-	@db_pwd		DB Password
-	@timeout	timeout(15)
+	@db_usr:	DB User
+	@db_pwd:	DB Password
+	@timeout:	timeout(15)
 	"""
 	ptt = PTTAllPostUser(**kwargs)
 	ptt.run()
 	del ptt
 
-@sdk.Robust
-def CaptureOnlineUser(**kwargs):
+@Robust
+def OnlineUser(**kwargs):
 	"""
 	@usr:		User
 	@pwd:		Password
-	@db_usr		DB User
-	@db_pwd		DB Password
-	@timeout	timeout(15)
+	@db_usr:	DB User
+	@db_pwd:	DB Password
+	@timeout:	timeout(15)
 	"""
 	ptt = PTTOnlineUser(**kwargs)
 	ptt.run()
