@@ -96,30 +96,18 @@ def interact():
 def selftest():
 	import doctest
 	doctest.testmod()
-def Robust(func):
-	def wrapper(*args, **kwargs):
-		while True:
-			try:
-				func(*args, **kwargs)
-			except KeyboardInterrupt:
-				continue
-
-	wrapper.func_name = func.func_name
-	globals()['Robust%s' %func.func_name] = wrapper
-	return func
-def job(*jobList):
+def addJob(*jobList):
 	from multiprocessing import Process
 	from getpass import getpass
 	global CURRENT_JOB
 
-	pid = []
 	for obj in jobList:
 		while True:
 			if callable(obj):
-				print "Do you run %s [y/N]" %(obj.func_name)
+				print "Do you run %s [y/N]:" %(obj.func_name),
 			else:
-				print "Do you run %s [y/N]" %(obj)
-			ans = raw_input(sys.ps2).upper()
+				print "Do you run %s [y/N]:" %(obj),
+			ans = raw_input().upper()
 			if ans[0] not in ('Y', 'N', ''):
 				continue
 
@@ -142,10 +130,26 @@ def job(*jobList):
 
 		p = Process(target=func, kwargs=parm)
 		p.start()
-		pid += [(obj, p)]
+		CURRENT_JOB += [(obj, p)]
+def delJob(index=None):
+	def _deljob_(index=0):
+		global CURRENT_JOB
+		if CURRENT_JOB[index][1].is_alive():
+			CURRENT_JOB[index][1].terminate()
+		del CURRENT_JOB[index]
+	if not index:
+		while len(CURRENT_JOB):
+			_deljob_()
+	else:
+		_deljob_(index)
+def lsJob():
+	global CURRENT_JOB
 
-	CURRENT_JOB += pid
-	return pid
-
+	cnt = 0
+	if not CURRENT_JOB:
+		print "There is no background job."
+	for job in CURRENT_JOB:
+		print "[%d] %s: %s." %(cnt, job[0], "alive" if job[1].is_alive() else "dead")
+		cnt += 1
 if __name__ == "__main__":
 	interact()
