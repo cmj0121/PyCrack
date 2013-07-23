@@ -3,14 +3,15 @@
 #! coding: big-5
 
 import __builtin__
+import atexit
 import code
 import readline
 import os
 import sys
+import task
+
 sys.path.append('/home/cmj/junkcode/')
 
-filterLevel = "public"
-CURRENT_JOB = []
 
 class Color(object):
 	normal = "\033[0m"
@@ -96,60 +97,12 @@ def interact():
 def selftest():
 	import doctest
 	doctest.testmod()
-def addJob(*jobList):
-	from multiprocessing import Process
-	from getpass import getpass
-	global CURRENT_JOB
+def exit_interact():
+	print "Goodbye..."
 
-	for obj in jobList:
-		while True:
-			if callable(obj):
-				print "Do you run %s [y/N]:" %(obj.func_name),
-			else:
-				print "Do you run %s [y/N]:" %(obj),
-			ans = raw_input().upper()
-			if ans[0] not in ('Y', 'N', ''):
-				continue
-
-			if not ans: ans = 'N'
-			break
-		if "N" == ans[0]: continue
-
-		func = eval(obj) if isinstance(obj, str) else obj
-		_parm = func.func_doc
-		_parm = [n for n in _parm.split('\n') if n.strip().startswith('@')]
-		parm = {}
-		for n in _parm:
-			key = n.split(':')
-			key, value = key[0].strip()[1:], ":".join(key[1:]).strip()
-			value = "%s%s: " %(sys.ps2, value)
-			parm[key] = getpass(value) if "Password" in value.title() else raw_input(value)
-
-			if not parm[key] and '(' in value:
-				parm[key] = value.split('(')[-1].split(')')[0]
-
-		p = Process(target=func, kwargs=parm)
-		p.start()
-		CURRENT_JOB += [(obj, p)]
-def delJob(index=None):
-	def _deljob_(index=0):
-		global CURRENT_JOB
-		if CURRENT_JOB[index][1].is_alive():
-			CURRENT_JOB[index][1].terminate()
-		del CURRENT_JOB[index]
-	if not index:
-		while len(CURRENT_JOB):
-			_deljob_()
-	else:
-		_deljob_(index)
-def lsJob():
-	global CURRENT_JOB
-
-	cnt = 0
-	if not CURRENT_JOB:
-		print "There is no background job."
-	for job in CURRENT_JOB:
-		print "[%d] %s: %s." %(cnt, job[0], "alive" if job[1].is_alive() else "dead")
-		cnt += 1
+filterLevel = "public"
+CURRENT_JOB = task.Task()
+atexit.register(exit_interact)
+atexit.register(CURRENT_JOB.DEL)
 if __name__ == "__main__":
 	interact()
