@@ -8,8 +8,7 @@ import code
 import readline
 import os
 import sys
-import task
-from common import COMMON
+from sdk.common import COMMON
 
 sys.path.append('/home/cmj/junkcode/')
 filterLevel = "public"
