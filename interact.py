@@ -9,9 +9,10 @@ import readline
 import os
 import sys
 import task
+from common import COMMON
 
 sys.path.append('/home/cmj/junkcode/')
-
+filterLevel = "public"
 
 class Color(object):
 	normal = "\033[0m"
@@ -43,9 +44,6 @@ class Theme(object):
 		""" Change the theme for the interact interpreter """
 		return {"ps1": "%s%s" %(Color.cyan, Color.bold),"ps2":Color.normal, "banner": Color.yellow}
 
-def clear():
-	print Color.normal
-	os.system('clear')
 def interact():
 	def Completer(text, stat):
 		def filterLv(key):
@@ -94,15 +92,12 @@ def interact():
 	readline.parse_and_bind("tab: complete")
 	readline.parse_and_bind("C-p: complete")
 	code.interact(banner=sys.banner, local=globals())
-def selftest():
-	import doctest
-	doctest.testmod()
 def exit_interact():
+	global common
+	del common
 	print "Goodbye..."
 
-filterLevel = "public"
-CURRENT_JOB = task.Task()
+common = COMMON()
 atexit.register(exit_interact)
-atexit.register(CURRENT_JOB.DEL)
 if __name__ == "__main__":
 	interact()

@@ -59,6 +59,8 @@ class Task(object):
 			cnt += 1
 		if ret: return "\n".join(ret)
 		else: return "No current job or task"
+	def __repr__(self):
+		return str(self)
 	def DEL(self):
 		for n in self.CURRENT_JOB:
 			n.DEL()
@@ -69,9 +71,12 @@ class Task(object):
 	def __getitem__(self, index):
 		return self.CURRENT_JOB[index]
 	def _addJob_(self, func):
-		t = _Task_(func)
-		if t.run():
-			self.CURRENT_JOB += [t]
+		if not isinstance(func, list) and not isinstance(func, tuple):
+			func = (func,)
+		for f in func:
+			t = _Task_(f)
+			if t.run():
+				self.CURRENT_JOB += [t]
 	def _deljob_(self, index=0):
 		del self.CURRENT_JOB[index]
 	addJob = property(__str__, _addJob_, None)

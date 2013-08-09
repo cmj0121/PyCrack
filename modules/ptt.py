@@ -8,21 +8,6 @@ import socket
 import time
 import tempfile
 
-def Robust(func):
-	def wrapper(*args, **kwargs):
-		while True:
-			try:
-				func(*args, **kwargs)
-			except KeyboardInterrupt:
-				continue
-			except Exception, e:
-				print Exception(e)
-				continue
-
-	wrapper.func_name = func.func_name
-	wrapper.func_doc  = func.func_doc
-	globals()['Robust%s' %func.func_name] = wrapper
-	return func
 class MatchStr(object):
 	def __init__(self, key, line=None):
 		self.key, self.line = key, line
@@ -158,7 +143,7 @@ class PTTAllPostUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					return
+					exit(0)
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -282,7 +267,7 @@ class PTTOnlineUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					return
+					exit(0)
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -402,7 +387,7 @@ class PTT2OnlineUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					return
+					exit(0)
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -490,6 +475,18 @@ class PTT2OnlineUser(PTT):
 	def test(self):
 		self._recvUntil_("測試, 不可能停".decode('utf-8'))
 
+def Robust(func):
+	def wrapper(*args, **kwargs):
+		while True:
+			try:
+				func(*args, **kwargs)
+			except Exception, e:
+				continue
+			time.sleep(1)
+	wrapper.func_name = func.func_name
+	wrapper.func_doc  = func.func_doc
+	globals()['Robust%s' %func.func_name] = wrapper
+	return func
 @Robust
 def AllPostUser(**kwargs):
 	"""
@@ -529,3 +526,5 @@ def P2OnlineUser(**kwargs):
 	ptt = PTT2OnlineUser(**kwargs)
 	ptt.run()
 	del ptt
+
+JOB = RobustAllPostUser, RobustOnlineUser, RobustP2OnlineUser
