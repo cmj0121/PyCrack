@@ -17,10 +17,10 @@ class COMMON(object):
 	def _targetInfo_(self, *host):
 		import socket
 
-		for h in host:
-			if host.startswith("http://"): host = host[7:]
+		for _h in host:
+			if _h.startswith("http://"): _h = _h[7:]
 			try:
-				ip = socket.gethostbyname(host)
+				ip = socket.gethostbyname(_h)
 				domain, alias, ip = socket.gethostbyaddr(ip)
 				print "IP: %s" %",".join(ip)
 				print "Domain: %s" %domain
