@@ -29,7 +29,7 @@ class Color(object):
 	blink = "\033[5m"
 	invert = "\033[7m"
 class Theme(object):
-	banner = "CMJ's Python Interpreter (v1.1)\n" \
+	banner = "CMJ's Python Interpreter (v1.2)\n" \
 			 "CopyRight (c) 2013 [cmj0121@gmail.com]. All rights resolved.\n"
 	ps1 = ">>> "
 	ps2 = "... "
@@ -92,11 +92,11 @@ def interact():
 	readline.parse_and_bind("C-p: complete")
 	code.interact(banner=sys.banner, local=globals())
 def exit_interact():
-	global common
-	del common
+	global jj
+	del jj
 	print "Goodbye..."
 
-common = COMMON()
+jj = COMMON()
 atexit.register(exit_interact)
 if __name__ == "__main__":
 	interact()
