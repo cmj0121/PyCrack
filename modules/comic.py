@@ -67,5 +67,24 @@ def re_manhuaa(path):
 		print "Wait 10 seconds"	
 		time.sleep(10)
 
+def tmp():
+	url = 'http://1.c.cdvcdn.com/page/6/1/2/8612/{lv}/008612-{lv_offset}-{nr}-{offset}.jpg'
+	lv_offset = 124009
+	offset = 8206999
+	for lv in range(50, 52):
+		for n in range(1, 200):
+			offset += 1
+			tmp = url.format(lv=lv, lv_offset=lv_offset+lv,nr=str(n).zfill(4), offset=offset+lv)
+			print tmp
+			try:
+				req = urllib2.Request(tmp)
+				req.add_header('User-agent', 'Mozilla 5.10')
+				img = urllib2.urlopen(req).read()
+			except Exception, e:
+				offset -= 2
+				break
+			with open("%s/%s.jpg" %(lv,str(n).zfill(3)), "w") as f:
+				f.write(img)
+
 if __name__ == "__main__":
 	re_manhuaa(range(45, 47))

@@ -1,9 +1,12 @@
 from . import task
+from modules import info
 
 class COMMON(object):
 	task = task.Task()
+
 	def __del__(self):
 		self.task.DEL()
+
 	def _self_(self):
 		import os
 		import requests, re
@@ -15,27 +18,38 @@ class COMMON(object):
 		r = requests.get('http://checkip.dyndns.org')
 		print "External IP: %s" %re.search(r'\d+\.\d+\.\d+\.\d+', r.text).group()
 	def _targetInfo_(self, *host):
-		import socket
-
-		for _h in host:
-			if _h.startswith("http://"): _h = _h[7:]
+		for _host in host:
 			try:
-				ip = socket.gethostbyname(_h)
-				domain, alias, ip = socket.gethostbyaddr(ip)
-				print "IP: %s" %",".join(ip)
-				print "Domain: %s" %domain
-				if alias: print "Alias: %s" %",".join(alias)
-				print ""
+				ret = info.IPInfo(_host)
+				if ret:
+					print "IP  %s" %ret["ip"]
+					print "Domain  %s" %ret["domain"]
+					if ret["alias"]: 
+						print "Alias  %s" %",".join(ret["alias"])
 			except Exception, e:
 				pass
+
+			try:
+				ret = info.WebInfo(_host)
+				print ret
+			except Exception, e:
+				pass
+
+			try:
+				ret = info.SSHInfo(_host)
+				print ret
+			except Exception, e:
+				pass
+	info = property(_self_, _targetInfo_, None)
+
 	def _clear_(self):
 		import os
 		print "\033[0m"
 		os.system('clear')
+	clear = property(_clear_, None, None)
+
 	def _selftest_(self):
 		import doctest
 		doctest.testmod()
-
-	info = property(_self_, _targetInfo_, None)
-	clear = property(_clear_, None, None)
 	selftest = property(_selftest_, None, None)
+

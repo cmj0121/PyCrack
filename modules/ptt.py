@@ -143,7 +143,7 @@ class PTTAllPostUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					exit(0)
+					return
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -267,7 +267,7 @@ class PTTOnlineUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					exit(0)
+					return
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -387,7 +387,7 @@ class PTT2OnlineUser(PTT):
 				if cnt > 20:
 					if 0 < self.DEBUG:
 						print "Too many error"
-					exit(0)
+					return
 
 			if not self.db_usr or not self.db_pwd:
 				continue
@@ -480,6 +480,8 @@ def Robust(func):
 		while True:
 			try:
 				func(*args, **kwargs)
+			except KeyboardInterrupt:
+				continue
 			except Exception, e:
 				continue
 			time.sleep(1)

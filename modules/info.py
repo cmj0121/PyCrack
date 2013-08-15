@@ -2,7 +2,6 @@
 #! coding: utf-8
 
 import socket
-from modules import sdk
 
 defaultTimeout = 5
 
@@ -16,6 +15,10 @@ def resolveInfo(host):
 	else:
 		ret = {"name": name, "alias": alias, "IP list": ips}
 	return ret
+def IPInfo(host, debug=False):
+	ip = socket.gethostbyname(host)
+	domain, alias, ip = socket.gethostbyaddr(ip)
+	return {"domain": domain, "alias": alias, "ip": ip}
 def WebInfo(host, port=80):
 	def ServerInfo(host, port):
 		if not host:
@@ -34,25 +37,20 @@ def WebInfo(host, port=80):
 		except socket.timeout, e:
 			ret = (-1, "Timeout")
 		except Exception, e:
-			print Exception(e)
-			ret = (-1, "%s" %Exception(e))
+			raise Exception(e)
 		finally:
 			return ret
 	ret = {}
 
 	## Get server info
-	st,  page = _ServerInfo(host, port)
+	st,  page = ServerInfo(host, port)
 	if 0 == st:
 		for word in ("nginx", "apache"):
 			if word in page:
 				ret["http server"] = word
 
-	## Get web info
-	web = sdk.wrapGetWebPage(host)
-	ret.update({"header": web.header})
-
 	return ret
-def SSHInfo(host, port=22):
+def SSHInfo(host, port=22, debug=False):
 	_timeout = socket.getdefaulttimeout()
 	socket.setdefaulttimeout(defaultTimeout)
 
