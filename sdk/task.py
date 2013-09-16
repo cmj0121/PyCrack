@@ -67,6 +67,8 @@ class Task(object):
 	def __del__(self):
 		self.DEL()
 	def __delitem__(self, index):
+		if hasattr(self.CURRENT_JOB[index], "DEL") and callable(self.CURRENT_JOB[index].DEL):
+			self.CURRENT_JOB[index].DEL()
 		del self.CURRENT_JOB[index]
 	def __getitem__(self, index):
 		return self.CURRENT_JOB[index]

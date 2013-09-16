@@ -1,11 +1,14 @@
 from . import task
 from modules import info
+from modules import todo
 
 class COMMON(object):
 	task = task.Task()
+	todo = todo.TODO_LIST()
 
 	def __del__(self):
 		self.task.DEL()
+		self.todo._save_(self.todo._job_)
 
 	def _self_(self):
 		import os
