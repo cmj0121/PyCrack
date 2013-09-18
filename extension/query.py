@@ -207,6 +207,7 @@ def _query_(usr, pwd, host, *username):
 			ret += ["%s: %s" %(_, e)]
 		finally:
 			print ret[-1]
+			time.sleep(1)
 	return ret
 @CLI
 def query(host, *username):
