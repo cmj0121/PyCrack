@@ -179,7 +179,7 @@ class PTT(TELNET):
 		self.screen. reset()
 class QueryUser(PTT):
 	def __init__(self, user, pwd, host, multi=False):
-		super(PTTQueryUser, self).__init__(user, pwd, host, killReplica=multi)
+		super(QueryUser, self).__init__(user, pwd, host, killReplica=multi)
 		self.gotoMainPage()
 	def query(self, user=None):
 		self.gotoQueryPage()
@@ -197,7 +197,7 @@ def _query_(usr, pwd, host, *username):
 
 	if host in ('ptt', 'ptt2'):
 		host = ('140.112.172.11', 23) if 'ptt' == host else ('140.112.172.12', 23)
-	p = QueryUser(user, pwd, host)
+	p = QueryUser(usr, pwd, host)
 	ret = []
 	for _ in username:
 		try:
