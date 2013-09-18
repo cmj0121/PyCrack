@@ -3,6 +3,7 @@
 #! coding: big-5
 __VERSION__ = 1.0
 
+import re
 import pyte
 import socket
 import time
