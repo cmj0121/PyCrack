@@ -98,7 +98,8 @@ class Task(object):
 	def __repr__(self):
 		return str(self)
 	def __del__(self):
-		del self._jobs_[:]
+		while self._jobs_:
+			del self._jobs_[0]
 	def __delitem__(self, index):
 		del self._jobs_[index]
 	def __getitem__(self, index):

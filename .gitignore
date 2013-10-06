@@ -1,3 +1,5 @@
+demo/
 *.swp
 *.pyc
 */*.pyc
+test.py

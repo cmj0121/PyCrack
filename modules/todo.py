@@ -19,7 +19,7 @@ class TODO_LIST(object):
 	def __delitem__(self, index):
 		del self._job_[index]
 	def __add__(self, value):
-		self._job_ += value
+		self._addJob_(value)
 		return self
 
 	## Data operations

@@ -1,4 +1,6 @@
-from modules import task, info, todo
+from modules import info
+from modules import todo
+from modules import task
 
 class COMMON(object):
 	def __init__(self):
@@ -6,7 +8,6 @@ class COMMON(object):
 		self.todo = todo.TODO_LIST()
 
 	def __del__(self):
-		print "Delete on COMMON"
 		del self.task
 		self.todo._save_(self.todo._job_)
 

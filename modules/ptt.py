@@ -34,8 +34,10 @@ class PTT(object):
 		self.stream.attach(self.screen)
 		self.login(user, pwd, host, killReplica)
 	def __del__(self):
-		socket.setdefaulttimeout(self._timeout)
-		self.sk.close()
+		if hasattr(self, "_timeout"):
+			socket.setdefaulttimeout(self._timeout)
+		if hasattr(self, "sk"):
+			self.sk.close()
 	def _recvUntil_(self, *conditions):
 		""" recv socket message until recv useful message """
 		if not conditions or not isinstance(conditions, tuple):
@@ -481,9 +483,9 @@ def Robust(func):
 			try:
 				func(*args, **kwargs)
 			except KeyboardInterrupt:
-				continue
+				break
 			except Exception, e:
-				continue
+				break
 			time.sleep(1)
 	wrapper.func_name = func.func_name
 	wrapper.func_doc  = func.func_doc
@@ -497,7 +499,7 @@ def AllPostUser(**kwargs):
 	@db_usr:		DB User
 	@db_pwd:		DB Password
 	@timeout:		timeout[15]
-	@killReplica:	Kill Replica [True]
+	@killReplica:	Kill Replica [False]
 	"""
 	ptt = PTTAllPostUser(**kwargs)
 	ptt.run()
@@ -510,7 +512,7 @@ def OnlineUser(**kwargs):
 	@db_usr:		DB User
 	@db_pwd:		DB Password
 	@timeout:		timeout[15]
-	@killReplica:	Kill Replica [True]
+	@killReplica:	Kill Replica [False]
 	"""
 	ptt = PTTOnlineUser(**kwargs)
 	ptt.run()
@@ -523,7 +525,7 @@ def P2OnlineUser(**kwargs):
 	@db_usr:		DB User
 	@db_pwd:		DB Password
 	@timeout:		timeout[15]
-	@killReplica:	Kill Replica [True]
+	@killReplica:	Kill Replica [False]
 	"""
 	ptt = PTT2OnlineUser(**kwargs)
 	ptt.run()
