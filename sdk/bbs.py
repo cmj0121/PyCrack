@@ -36,8 +36,6 @@ class TELNET(object):
 
 		self.stream.attach(self.screen)
 	def __del__(self):
-		self.DEL()
-	def DEL(self):
 		socket.setdefaulttimeout(self._timeout)
 		self.sk.close()
 	def __str__(self):
