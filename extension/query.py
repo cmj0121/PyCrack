@@ -215,9 +215,28 @@ def query(host, *username):
 	usr = raw_input("Usr: ")
 	pwd = getpass.getpass("Pwd: ")
 	return _query_(usr, pwd, host, *username)
+def randQuery(usr=None, pwd=None):
+	import commands
+	import getpass
+
+	if not usr or not pwd:
+		usr = raw_input("Usr: ")
+		pwd = getpass.getpass("Pwd: ")
+	cmd = "SELECT * from USERINFO ORDER by RAND() LIMIT 1;"
+	cmd = "mysql -h ds -D cmj -u {usr} --password={pwd} -e '{cmd}'".format(usr=usr, pwd=pwd, cmd=cmd)
+	st, ret = commands.getstatusoutput(cmd)
+	if st:
+		raise SystemError(ret)
+	else:
+		print ret
 def help_msg():
 	import sys
 	print "%s [host] [[username] ...]" %sys.argv[0]
 	exit(1)
 if __name__ == "__main__":
-	query()
+	import sys
+
+	if 2 == len(sys.argv) and sys.argv[1].lower() in ("random","rand"):
+		randQuery()
+	else:
+		query()

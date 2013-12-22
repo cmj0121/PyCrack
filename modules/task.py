@@ -18,36 +18,21 @@ class _Task_(object):
 			self.func = func
 		else:
 			raise SystemError("We only support run function")
-
-		if not callable(self.func):
-			raise SystemError("We only support run function")
 	def __del__(self):
-		if -1 == self.pid: return
-
-		os.unlink(self.pidFile)
-		self.proc.terminate()
-		self.proc.join()
+		import time
+		print "Del"
+		if hasattr(self, "proc") and self.proc.is_alive():
+			self.proc.terminate()
+			time.sleep(0.1)
+			self.proc.join()
 	def __str__(self):
-		if -1 == self.pid:
-			st = "dead"
+		if hasattr(self, "proc") and self.proc.is_alive():
+			st = "Alive"
 		else:
-			with open(self.pidFile) as f:
-				st = "alive (%s)" %f.read()
+			st = "Dead"
 		return "Process [%s] is %s" %(self.func.func_name, st)
 	def __repr__(self):
 		return str(self)
-
-	@property
-	def pid(self):
-		if hasattr(self, "proc") and self.proc.is_alive():
-			return self.proc.pid
-		else:
-			return -1
-	@property
-	def pidFile(self):
-		if -1 == self.pid:
-			raise SystemError("Process not run!")
-		return "/tmp/task.{pid}".format(pid=self.pid)
 
 	def _loadParm_(self, func_name, doc):
 		while True:
@@ -86,19 +71,31 @@ class _Task_(object):
 
 		self.proc = Process(target=func, kwargs=parm)
 		self.proc.start()
-		if not os.path.exists(self.pidFile):
-			with open(self.pidFile, "w") as f:
-				pass
 		return True
-class Task(object):
-	_jobs_ = []
+def test_Task_():
+	import commands
+	import sys
+	def foo():
+		import time
+		while True: time.sleep(1)
 
+	t = _Task_(foo)
+	t.run()
+	st, ret = commands.getstatusoutput("ps aux | grep python | grep %s" %sys.argv[0])
+	ret = [_ for _ in ret.split("\n") if _]
+	if 0 != st or 3 != len(ret):
+		raise SystemError("Test faild:\n\t%s" %"\n\t".join(ret))
+
+class Task(object):
+	def __init__(self):
+		self._jobs_ = []
 	def __str__(self):
 		return self.job
 	def __repr__(self):
 		return str(self)
 	def __del__(self):
-		while self._jobs_:
+		print "Del Task"
+		while len(self._jobs_):
 			del self._jobs_[0]
 	def __delitem__(self, index):
 		del self._jobs_[index]
@@ -121,6 +118,8 @@ class Task(object):
 			t = _Task_(f)
 			if t.run():
 				self._jobs_ += [t]
+			else:
+				print "[%s] cannot run" %func
 	def _deljob_(self, index=0):
 		if isinstance(index, int):
 			del self._jobs_[index]
@@ -128,3 +127,9 @@ class Task(object):
 			raise KeyError("Not support key=%s" %key)
 	job = property(_getJob_, _addJob_, _deljob_)
 
+
+def test():
+	test_Task_()
+
+if __name__ == "__main__":
+	test()
