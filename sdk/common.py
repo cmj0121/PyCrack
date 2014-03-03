@@ -1,15 +1,12 @@
 from modules import info
-from modules import todo
 from modules import task
 
 class COMMON(object):
 	def __init__(self):
 		self.task = task.Task()
-		self.todo = todo.TODO_LIST()
 
 	def __del__(self):
 		del self.task
-		self.todo._save_(self.todo._job_)
 
 	def _self_(self):
 		import os
