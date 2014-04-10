@@ -3,3 +3,6 @@ demo/
 *.pyc
 */*.pyc
 test.py
+build/
+dist/
+*.egg-info/

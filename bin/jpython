@@ -1,0 +1,9 @@
+#! /usr/bin/sh
+
+jj=`which jj 2>/dev/null`
+if [ -n "$jj" ]; then
+	$jj jpython
+else
+	echo "You need to install [jj] first"
+	exit -1
+fi

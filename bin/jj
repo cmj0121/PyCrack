@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+#! coding: utf-8
+
+try:
+	import jj
+except ImportError as e:
+	import os, sys
+	sys.path.append(os.getcwd())
+	import jj
+
+exit(jj.dispatch())
