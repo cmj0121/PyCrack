@@ -8,4 +8,5 @@ except ImportError as e:
 	sys.path.append(os.getcwd())
 	import jj
 
-exit(jj.dispatch())
+import sys
+exit(jj.dispatch(*sys.argv[1:], **jj.conf.DEFAULT_CONF))

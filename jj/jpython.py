@@ -60,12 +60,12 @@ def interact(PS1, PS2, BANNER, *arg, **kwarg):
 			return ret[stat]
 		except IndexError:
 			return None
+	@utils.regExitCallback
 	def exit_interact():
 		""" Clean all when exit """
 		
 		print "Goodbye..."
 
-	utils.regExit(exit_interact)
 	## Change PS
 	sys.ps1, sys.ps2 = PS1, PS2
 	delims = readline.get_completer_delims().replace('/','')
@@ -76,3 +76,6 @@ def interact(PS1, PS2, BANNER, *arg, **kwarg):
 	## Run Interpreter
 	code.interact(banner=BANNER, local=globals())
 
+if __name__ == "__main__":
+	from jj.conf import DEFAULT_CONF as _C
+	interact(**_C)
