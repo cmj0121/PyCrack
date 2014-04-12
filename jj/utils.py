@@ -162,12 +162,13 @@ class Dispatch(object):
 			"fn": callback_fn, "help": help }
 		})
 		return self
-	@regMethod
+	@regMethod('test')
 	def test(self, *arg, **kwarg):
 		""" Run doctest """
 		import doctest
+		from jj import conf, info, jpython
 
-		_MODULE_ = (conf, jpython)
+		_MODULE_ = (conf, info, jpython)
 		print "Run doctest... ",
 		doctest.testmod()
 		for _ in _MODULE_: doctest.testmod(_)
