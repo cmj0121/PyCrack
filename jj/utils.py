@@ -156,7 +156,11 @@ class Dispatch(object):
 					else:
 						return self.showResult(**kwarg)
 		else:
-			return self.helpMsg(*arg, **kwarg)
+			if "" in self.callback_fn:
+				kwarg["RAW_DATA"] = self.callback_fn[""]["fn"](*arg, **kwarg)
+				return self.showResult(**kwarg)
+			else:
+				return self.helpMsg(*arg, **kwarg)
 	def addArgument(self, name, callback_fn, help=""):
 		self.callback_fn.update({name: {
 			"fn": callback_fn, "help": help }
