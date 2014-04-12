@@ -119,18 +119,14 @@ class WebBase(object):
 		import re
 		import socket
 
-		try:
-			if target.startswith('http'):
-				ip = socket.gethostbyname(self.getDomain(target)[1])
-			elif re.match(r'.*?:\d+', target):
-				target, port = ":".join(target.split(":")[:-1]), target.split(":")[-1]
-				ip = socket.gethostbyname(target)
-			else:
-				ip = socket.gethostbyname(target)
-			return ip
-		except socket.gaierror as e:
-			if -2 == e.errno: return ""
-			else: raise e
+		if target.startswith('http'):
+			ip = socket.gethostbyname(self.getDomain(target)[1])
+		elif re.match(r'.*?:\d+', target):
+			target, port = ":".join(target.split(":")[:-1]), target.split(":")[-1]
+			ip = socket.gethostbyname(target)
+		else:
+			ip = socket.gethostbyname(target)
+		return ip
 class Dispatch(object):
 	"""	Command dispatch """
 	def __init__(self):
