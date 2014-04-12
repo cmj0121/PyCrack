@@ -35,15 +35,16 @@ DEFAULT_CONF["BANNER"]			= "{THEME_YELLOW}"\
 	"{THEME_NORMAL}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro, **DEFAULT_CONF)
 DEFAULT_CONF["PS1"]				= "\001{THEME_CYAN}{THEME_BOLD}\002>>> \001{THEME_NORMAL}\002".format(**DEFAULT_CONF)
 DEFAULT_CONF["PS2"]				= "\001{THEME_YELLOW}\002... \001{THEME_NORMAL}\002".format(**DEFAULT_CONF)
+DEFAULT_CONF["CURRENT_CMD"]	= [DEFAULT_CONF["PROG_NAME"]]
 
 ## Global Parameter
-DEFAULT_CONF["DEPTH"]		= 1
-DEFAULT_CONF["DEBUG"]		= 1
-DEFAULT_CONF["FILE"]		= ""
-DEFAULT_CONF["OUT_FILE"]	= ""
-DEFAULT_CONF["JOBS"]		= 1
-DEFAULT_CONF["QUITE"]		= False
-DEFAULT_CONF["VERBOUS"]		= 0
-DEFAULT_CONF["CURRENT_CMD"]	= [DEFAULT_CONF["PROG_NAME"]]
-DEFAULT_CONF["PRETTY"]		= "pretty"
-
+DEFAULT_CONF["DEPTH"]		= 1			## -d, --depth=
+DEFAULT_CONF["DEBUG"]		= 0			## -D, --debug=
+DEFAULT_CONF["FILE"]		= ""		## -f, --file=
+DEFAULT_CONF["OUT_FILE"]	= ""		## -o, --output=
+DEFAULT_CONF["JOBS"]		= 1			## -j, --jobs=
+DEFAULT_CONF["QUITE"]		= False		## -q, --quite
+DEFAULT_CONF["VERBOUS"]		= 0			## -v, -vv, -vvv
+DEFAULT_CONF["PRETTY"]		= "pretty"	## --pretty=
+DEFAULT_CONF["BUFSIZ"]		= 8196		## --bufsiz=
+DEFAULT_CONF["PORT"]		= 80		## -p, --port=80
