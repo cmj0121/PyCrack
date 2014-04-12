@@ -71,7 +71,13 @@ def interact(PS1, PS2, BANNER, *arg, **kwarg):
 	delims = readline.get_completer_delims().replace('/','')
 	readline.set_completer_delims(delims)
 	readline.set_completer(Completer)
-	readline.parse_and_bind("tab: complete")
+
+	## Compatible for Mac OS since Mac OS ship libedit for readline
+	if "libedit" in readline.__doc__:
+		import rlcompleter
+		readline.parse_and_bind("bind ^I rl_complete")
+	else:
+		readline.parse_and_bind("tab: complete")
 
 	## Run Interpreter
 	code.interact(banner=BANNER, local=globals())

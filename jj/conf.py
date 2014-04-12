@@ -2,6 +2,7 @@
 #! coding: utf-8
 
 import time
+import sys
 
 DEFAULT_CONF = {}
 ## THEME
@@ -29,9 +30,9 @@ DEFAULT_CONF["SOURCE_FOLDER"]	= ["jj"]
 DEFAULT_CONF["BINARY"]			= ["bin/jj", "bin/jpython"]
 DEFAULT_CONF["NOW"]				= time.gmtime()
 DEFAULT_CONF["BANNER"]			= "{THEME_YELLOW}"\
-	"{AUTHOR}'s Python interpreter v{VERSION}.\n" \
+	"{AUTHOR}'s Python ({0}.{1}.{2}) interpreter v{VERSION}.\n" \
 	"All Copyight (C) reserved 2014-{NOW.tm_year}" \
-	"{THEME_NORMAL}".format(**DEFAULT_CONF)
+	"{THEME_NORMAL}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro, **DEFAULT_CONF)
 DEFAULT_CONF["PS1"]				= "\001{THEME_CYAN}{THEME_BOLD}\002>>> \001{THEME_NORMAL}\002".format(**DEFAULT_CONF)
 DEFAULT_CONF["PS2"]				= "\001{THEME_YELLOW}\002... \001{THEME_NORMAL}\002".format(**DEFAULT_CONF)
 
