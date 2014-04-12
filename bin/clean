@@ -1,7 +1,7 @@
-#! /usr/bin/sh
+#! /usr/bin/env sh
 
 # Remove generated file from setup.py 
-rm -rf build/ dist/ *egg-info/ 
+rm -rf build/ dist/ *egg-info/ modules 
 # Remove .pyc file
 find . | grep .pyc$ | xargs rm 2>/dev/null
 # vim: filetype=sh 
