@@ -5,6 +5,8 @@ try:
 	from setuptools import setup, find_packages
 except ImportError:
 	from distutils.core import setup
+	def find_packages(): return ["jj"]
+
 from jj.conf import DEFAULT_CONF as _C
 
 setup(	name		= "jj",
