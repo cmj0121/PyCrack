@@ -4,6 +4,7 @@
 try:
 	from setuptools import setup, find_packages
 except ImportError:
+	print "Cannot import setuptools, try distutils.core"
 	from distutils.core import setup
 	def find_packages(): return ["jj"]
 

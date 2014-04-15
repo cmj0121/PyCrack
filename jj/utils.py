@@ -168,8 +168,7 @@ class Dispatch(object):
 						kwarg["RAW_DATA"] = self.callback_fn[_]["fn"](*arg[1:], **kwarg)
 					except Exception as e:
 						print "Get Exception: %s" %e
-						kwarg["CURRENT_CMD"] = kwarg["CURRENT_CMD"][:-1]
-						return self.helpMsg(*arg, **kwarg)
+						sys.exit(1)
 					else:
 						return self.showResult(**kwarg)
 		else:
@@ -210,7 +209,7 @@ class Dispatch(object):
 		if "EXTRA_PARM" in kwarg:
 			for _ in kwarg["EXTRA_PARM"]:
 				print "    {PARM} {HELP}".format(**_)
-		return 1
+		sys.exit(1)
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
 		""" Show result """
 		if "raw" == PRETTY: print rawData

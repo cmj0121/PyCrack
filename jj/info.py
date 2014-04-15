@@ -51,8 +51,9 @@ class INFO(Dispatch, WebBase):
 		""" Get the geographic for target """
 		import json
 
-		target = Target(target)
-		target = "freegeoip.net/json/{0}".format(target.ip)
+		t = Target(target)
+		if not t.ip: raise SystemError("Target (%s) not found" %target)
+		target = "freegeoip.net/json/{0}".format(t.ip)
 		geo = self.getPage(target, *arg, **kwarg)
 		if geo and 200 != geo.status_code: return {}
 		else: return {"geo": json.loads(geo.text)}
@@ -77,7 +78,7 @@ class INFO(Dispatch, WebBase):
 		if "Server" not in ret: ret["Server"] = "Unknown"
 		return {"server": ret}
 	@regMethod('cms')
-	def cms(self, target, ENCODE, *arg, **kwarg):
+	def cms(self, target, ENCODE, CMS_FILTER, CMS_TOKEN, *arg, **kwarg):
 		""" Get the web page and parse the contain """
 		import re
 
@@ -95,14 +96,13 @@ class INFO(Dispatch, WebBase):
 
 		## Find the meta info for content
 		## Example: <meta name="generator" content="Discuz! 7.2" />
-		metaToken = r"<meta\s+.*?content=[\"'](.*?)['\"].*?/>"
 		match = [	_.strip()
-					for _ in re.findall(metaToken, page, re.UNICODE)
+					for filter in CMS_FILTER
+					for _ in re.findall(filter, page, re.UNICODE)
 					if _.strip()]
 
-		for _ in match:
-			if re.match(r"Discuz!\s?[0-9.]+", _, re.UNICODE):
-				ret["cms"] += [_]
+		ret["cms"] = [_ for _ in match for token in CMS_TOKEN
+						if re.match(token, _, re.UNICODE)]
 		return ret
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
 		if "raw" == PRETTY: print rawData
@@ -124,6 +124,3 @@ class INFO(Dispatch, WebBase):
 		else: raise NotImplementedError("Not support format: %s" %PRETTY)
 		return 0
 
-if __name__ == "__main__":
-	import doctest
-	doctest.testmod()
