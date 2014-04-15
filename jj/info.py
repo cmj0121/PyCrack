@@ -8,7 +8,7 @@ Function
 	1- geographic
 """
 
-from utils import WebBase, regMethod, Dispatch
+from utils import Target, WebBase, regMethod, Dispatch
 
 class INFO(Dispatch, WebBase):
 	"""
@@ -23,8 +23,8 @@ class INFO(Dispatch, WebBase):
 	True
 
 	>>> ret = info.serType("www.google.com", 8160, 80)["server"]
-	>>> ret["Server"].startswith("GFE")
-	True
+	>>> ret["Server"]
+	sffe
 	"""
 	def __init__(self):
 		self.callback_fn = {}
@@ -32,6 +32,8 @@ class INFO(Dispatch, WebBase):
 			help="Default information scan")
 		self.addArgument("geo", self.geo,
 			help="Get geographic information")
+		self.addArgument("cms", self.cms,
+			help="Get CMS type")
 		self.addArgument("server", self.serType,
 			help="Server information")
 	@regMethod('info')
@@ -42,13 +44,15 @@ class INFO(Dispatch, WebBase):
 		ret = {}
 		ret.update(self.geo(target, *arg, **kwarg))
 		ret.update(self.serType(target, *arg, **kwarg))
+		ret.update(self.cms(target, *arg, **kwarg))
 		return ret
 	@regMethod()
 	def geo(self, target, *arg, **kwarg):
 		""" Get the geographic for target """
 		import json
 
-		target = "freegeoip.net/json/{0}".format(self.asIP(target, *arg, **kwarg))
+		target = Target(target)
+		target = "freegeoip.net/json/{0}".format(target.ip)
 		geo = self.getPage(target, *arg, **kwarg)
 		if geo and 200 != geo.status_code: return {}
 		else: return {"geo": json.loads(geo.text)}
@@ -57,7 +61,9 @@ class INFO(Dispatch, WebBase):
 		""" Get server information """
 		import socket
 
-		sk = socket.create_connection((target, PORT))
+		target = Target(target)
+		domain = target.netloc
+		sk = socket.create_connection((domain, PORT))
 		## Get server type by send HEAD method
 		req = 	"HEAD / HTTP/1.1\r\n" \
 				"HOST: %s\r\n\r\n" %target
@@ -70,6 +76,34 @@ class INFO(Dispatch, WebBase):
 					for _ in ret if ":" in _}
 		if "Server" not in ret: ret["Server"] = "Unknown"
 		return {"server": ret}
+	@regMethod('cms')
+	def cms(self, target, ENCODE, *arg, **kwarg):
+		""" Get the web page and parse the contain """
+		import re
+
+ 		ret = {"cms": []}
+		page = self.getPage(target, *arg, **kwarg)
+		if not page:
+			if kwarg and (kwarg["DEBUG"]):
+				print "Taret ({0}) not found".format(target)
+			return ret
+
+		page = page.text
+		if isinstance(page, unicode): page = page.encode(ENCODE)
+		if kwarg and (kwarg["DEBUG"]):
+			print "Load web page with len: {0}".format(len(page))
+
+		## Find the meta info for content
+		## Example: <meta name="generator" content="Discuz! 7.2" />
+		metaToken = r"<meta\s+.*?content=[\"'](.*?)['\"].*?/>"
+		match = [	_.strip()
+					for _ in re.findall(metaToken, page, re.UNICODE)
+					if _.strip()]
+
+		for _ in match:
+			if re.match(r"Discuz!\s?[0-9.]+", _, re.UNICODE):
+				ret["cms"] += [_]
+		return ret
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
 		if "raw" == PRETTY: print rawData
 		elif not isinstance(RAW_DATA, dict):
@@ -85,6 +119,8 @@ class INFO(Dispatch, WebBase):
 				FORMAT = \
 					u"{0:<10} {Server}"
 				print FORMAT.format("Server", **RAW_DATA["server"])
+			if "cms" in RAW_DATA and RAW_DATA["cms"]:
+				print u"{0:<10} {1}".format("CMS", ", ".join(RAW_DATA["cms"]))
 		else: raise NotImplementedError("Not support format: %s" %PRETTY)
 		return 0
 

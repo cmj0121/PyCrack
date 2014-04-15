@@ -48,3 +48,4 @@ DEFAULT_CONF["VERBOUS"]		= 0			## -v, -vv, -vvv
 DEFAULT_CONF["PRETTY"]		= "pretty"	## --pretty=
 DEFAULT_CONF["BUFSIZ"]		= 8196		## --bufsiz=
 DEFAULT_CONF["PORT"]		= 80		## -p, --port=80
+DEFAULT_CONF["ENCODE"]		= "utf-8"

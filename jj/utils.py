@@ -55,78 +55,99 @@ def clearPyc():
 	ret = [_ for _ in os.popen(cmd).read().split('\n') if _]
 	for _ in ret:
 		os.unlink(_)
-class WebBase(object):
-	""" Virtual class and handle all general Web OPs """
-	def normalizationURL(self, url):
-		"""
-		normalizate URL as format: scheme://domain
 
-		>>> ws = WebBase()
-		>>> url = ws.normalizationURL("www.example.com")
+class Target(object):
+	""" Pseudo object for target
+		>>> t = Target("cmj.tw")
+		>>> t.ip == "106.186.121.24"
+		True
+		>>> t.scheme == "http"
+		True
+		>>> t.url == "http://cmj.tw"
+		True
+
+		>>> t = Target()
+		>>> url = t.normalizationURL("www.example.com")
 		>>> "http://www.example.com" == url
 		True
-
-		>>> url = ws.normalizationURL("https://www.example.com")
+		>>> url = t.normalizationURL("https://www.example.com")
 		>>> "https://www.example.com" == url
 		True
-		"""
+
+		>>> ("", "") == t.getDomain("www.example.com")
+		True
+		>>> ("http", "www.example.com") == t.getDomain("http://www.example.com")
+		True
+
+		>>> "127.0.0.1" == t.asIP("localhost")
+		True
+		>>> "127.0.0.1" == t.asIP("127.0.0.1")
+		True
+		>>> "" == t.asIP("999.999.999.99")
+		True
+		>>> "" == t.asIP('http://translate.google.com.tw/#auto/zh-TW/trick')
+		True
+	"""
+	def __init__(self, target=None, **kwarg):
+		if isinstance(target, Target):
+			return target
+		elif target:
+			self.url = self.normalizationURL(target)
+			self.scheme, self.netloc = self.getDomain(self.url)
+			self.ip  = self.asIP(self.netloc)
+		else:
+			self.url = self.scheme = self.netloc = self.ip = None
+	def normalizationURL(self, url):
+		""" normalizate URL as format: scheme://domain """
 		if not url.startswith('http'): url = "http://" + url
 		return url
-	def getPage(self, url, AGENT="WS Scanner", *arg, **kwarg):
-		"""
-		The wrap for get web page.
+	def getDomain(self, url):
+		""" Get the domain from format URL """
+		import urlparse
+		_ = urlparse.urlparse(url)
+		return _.scheme, _.netloc
+	def asIP(self, target, *arg, **kwarg):
+		""" Transfer to IP address if possible from domain name """
+		import re
+		import socket
 
+		try:
+			if re.match(r'.*?:\d+', target):
+				target, port = ":".join(target.split(":")[:-1]), target.split(":")[-1]
+				ip = socket.gethostbyname(target)
+			else:
+				ip = socket.gethostbyname(target)
+			return ip
+		except socket.gaierror as e:
+			if kwarg and "DEBUG" in kwarg and kwarg["DEBUG"]:
+				print "Target (%s) %s" %(target, e)
+			return "" 
+class WebBase(object):
+	"""
+	Web-Based utils 
 		>>> ws = WebBase()
 		>>> if ws.getPage("www.example.com"): print "RECV"
 		RECV
 
 		>>> if ws.getPage("a.b.c"): print "RECV"
+	"""
+	def getPage(self, target, AGENT="WS Scanner", *arg, **kwarg):
+		"""
+		The wrap for get web page and support cache mechanism.
+
 		"""
 		import requests
-		headers = {'User-Agent': AGENT}
+		headers, url = {'User-Agent': AGENT}, Target(target).url
+		if not url: return None
 		try:
-			return requests.get(self.normalizationURL(url), headers=headers)
+			if not hasattr(self, "_pages_"): self._pages_ = {}
+			if url in self._pages_: return self._pages_[url]
+			self._pages_[url] = requests.get(url, headers=headers)
+			return self._pages_[url]
 		except requests.exceptions.ConnectionError as e:
+			if kwarg and "DEBUG" in kwarg and kwarg["DEBUG"]:
+				print "Target (%s) %s" %(target, e)
 			return None
-	def getDomain(self, url):
-		"""
-		Get the domain from format URL
-
-		>>> ws = WebBase()
-		>>> ("", "") == ws.getDomain("www.example.com")
-		True
-
-		>>> ("http", "www.example.com") == ws.getDomain("http://www.example.com")
-		True
-		"""
-		import urlparse
-		_ = urlparse.urlparse(url)
-		return _.scheme, _.netloc
-	def asIP(self, target, *arg, **kwarg):
-		"""
-		Transfer to IP address if possible
-
-		>>> ws = WebBase()
-		>>> "127.0.0.1" == ws.asIP("localhost")
-		True
-		>>> "127.0.0.1" == ws.asIP("127.0.0.1")
-		True
-		>>> "" == ws.asIP("999.999.999.99")
-		True
-		>>> "" == ws.asIP('http://translate.google.com.tw/#auto/zh-TW/trick')
-		False
-		"""
-		import re
-		import socket
-
-		if target.startswith('http'):
-			ip = socket.gethostbyname(self.getDomain(target)[1])
-		elif re.match(r'.*?:\d+', target):
-			target, port = ":".join(target.split(":")[:-1]), target.split(":")[-1]
-			ip = socket.gethostbyname(target)
-		else:
-			ip = socket.gethostbyname(target)
-		return ip
 class Dispatch(object):
 	"""	Command dispatch """
 	def __init__(self):
