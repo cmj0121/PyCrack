@@ -3,10 +3,27 @@
 
 import struct
 import socket
+import sys
 import traceback
 import os
 
-class TLS(object):
+class Logging(object):
+	def dumpPackage(self, session, package, fd=sys.stdout):
+		""" Dump package contain in pretty format """
+		session = "==== %s ====\n" %session
+		fd.write(session)
+		for _ in xrange(0, len(package), 16):
+			tmp = [c for c in package[_:_+16]]
+			HEX = " ".join(["%02x" %ord(c) for c in tmp])
+			STR = "".join((c if 32 <= ord(c) <= 126 else '.' )for c in tmp)
+			fd.write("  %04x: %-48s %s\n" %(_, HEX, STR))
+		fd.write("\n\n")
+		fd.flush()
+	def accessLog(self, addr, fd=sys.stdout):
+		""" Record the access log """
+		fd.write("Try to access TLS from [%s]\n" %str(addr))
+		fd.flush()
+class TLS(Logging):
 	"""
 	Reference:
 		1. [TLS v1.2], RFC 5246
@@ -61,7 +78,7 @@ class HeartBleed(TLS):
 			exit(-1)
 		self.tcpServer(port, max_client)
 	def tcpServer(self, port, max_client):
-		""" Create TCP Server as SSL/HearrBleed Service"""
+		""" Create TCP Server as SSL/HeartBleed Service"""
 		sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			sk.bind(("", port))
@@ -69,6 +86,7 @@ class HeartBleed(TLS):
 			while True:
 				cli, addr = sk.accept()
 				try:
+					self.accessLog(addr)
 					self.handle(cli, addr)
 				except KeyboardInterrupt:
 					cli.close()
@@ -109,6 +127,7 @@ class HeartBleed(TLS):
 			if not buf: raise SystemError("Not receive any package")
 			type, version, length = self.TLSDecode(buf)
 			payload = self.recv(cli, length)
+			self.dumpPackage("TSL [%s]" %type, buf + payload)
 
 			if type == self.HANDSHARK:
 				data = self.TLSHandshake(14, "End Handshake")
@@ -118,7 +137,6 @@ class HeartBleed(TLS):
 				msg = self.FakeMem(length)
 				data = self.TLSHeartbeat(2, msg)
 				cli.send(data)
-
 	def FakeMem(self, length):
 		msg = "TLS HeartBleed honeypot"
 		while len(msg) < length: msg += msg
