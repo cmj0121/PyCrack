@@ -8,7 +8,7 @@ import traceback
 import os
 
 class Logging(object):
-	def dumpPackage(self, session, package, fd=sys.stdout):
+	def dumpPackage(self, session, package, fd):
 		""" Dump package contain in pretty format """
 		session = "==== %s ====\n" %session
 		fd.write(session)
@@ -19,9 +19,9 @@ class Logging(object):
 			fd.write("  %04x: %-48s %s\n" %(_, HEX, STR))
 		fd.write("\n\n")
 		fd.flush()
-	def accessLog(self, addr, fd=sys.stdout):
+	def accessLog(self, addr, fd):
 		""" Record the access log """
-		fd.write("Try to access TLS from [%s]\n" %str(addr))
+		fd.write("Try to access TLS HeartBleed from [%s]\n" %str(addr))
 		fd.flush()
 class TLS(Logging):
 	"""
@@ -37,6 +37,8 @@ class TLS(Logging):
 	HEARTBEAT  = 24
 	CMD = {"21": "ALERT", "22": "HANDSHAKE", "24": "HEARTBEAT"}
 
+	def __init__(self):
+		self.ver = "\x03\x02"
 	def TLSDecode(self, buf, type=None):
 		""" TLS Header Decode """
 		if not type:
@@ -63,7 +65,7 @@ class TLS(Logging):
 		payload  = struct.pack(">B", type)
 		payload += struct.pack(">I", length)[1:]
 		payload += struct.pack(">{0}s".format(len(data)), data)
-		return self.TLSRecord(22, 0x0302, payload)
+		return self.TLSRecord(22, self.ver, payload)
 	def TLSHeartbeat(self, type, data, length=None):
 		if type not in (1, 2):
 			raise SystemError("TLS Heartbeat only support type: 1(req) / 2 (reply)")
@@ -76,9 +78,11 @@ class TLS(Logging):
 		## But we fix size as payload < 32K
 		if len(payload) > (2**15):
 			raise SystemError("TLS Heartbeat payload only allow < 2^15")
-		return self.TLSRecord(24, 32, payload)
+		return self.TLSRecord(24, self.ver, payload)
 class HeartBleed(TLS):
 	def __init__(self, port=443, max_client=10):
+		super(HeartBleed, self).__init__()
+
 		if os.getuid()*os.getgid():
 			print "HeartBleed honeypot need run as root..."
 			exit(-1)
@@ -92,8 +96,10 @@ class HeartBleed(TLS):
 			while True:
 				cli, addr = sk.accept()
 				try:
-					self.accessLog(addr)
-					self.handle(cli, addr)
+					with open("access.log", "a") as f:
+						self.accessLog(addr, f)
+					with open("%s.access" %addr[0], "a") as f:
+						self.handle(cli, f)
 				except KeyboardInterrupt:
 					cli.close()
 					raise KeyboardInterrupt
@@ -142,7 +148,7 @@ class HeartBleed(TLS):
 			length, payload = struct.unpack(">I", "\x00" + payload[:3]), payload[3:]
 
 			if 1 == type[0]: ## ClientHello
-				ver, random, session = struct.unpack(">H32sB", payload[:35])
+				self.ver, random, session = struct.unpack(">H32sB", payload[:35])
 				payload = payload[35:]
 
 				cipherLen	= struct.unpack(">H", payload[:2])[0]
@@ -153,12 +159,12 @@ class HeartBleed(TLS):
 				payload 	= payload[2:]
 				extension, payload = payload[:extensionLen], payload[extensionLen:]
 
-				reply = ServerHello(ver, random, session)
+				reply = ServerHello(self.ver, random, session)
 				cli.send(self.TLSHandshake(2, reply))
 			else:
 				print "Cannot handle Handshake type: %s %s" %(type, length)
 				raise NotImplementedError
-	def handle(self, cli, addr):
+	def handle(self, cli, fd):
 		""" Handle TLS communication """
 		while True:
 			## Receive the TLS package
@@ -166,7 +172,7 @@ class HeartBleed(TLS):
 			if not buf: raise SystemError("Not receive any package")
 			type, version, length = self.TLSDecode(buf)
 			payload = self.recv(cli, length)
-			self.dumpPackage("TSL [%s]" %self.CMD[str(type)], buf + payload)
+			self.dumpPackage("TSL [%s]" %self.CMD[str(type)], buf + payload, fd)
 
 			if type == self.HANDSHAKE:
 				self.handleHandshake(cli, payload)
@@ -178,8 +184,21 @@ class HeartBleed(TLS):
 				data = self.TLSHeartbeat(2, msg)
 				cli.send(data)
 	def FakeMem(self, length):
-		msg = "TLS HeartBleed honeypot"
-		while len(msg) < length: msg += msg
+		""" Generate fake memory space """
+		import random
+		import string
+
+		def noise():
+			size = random.randint(0, 128)
+			return "".join([chr(random.randint(0, 255)) for _ in range(size)])
+		def zero():
+			size = random.randint(0, 1024)
+			return chr(0)*size
+		msg = ""
+		while len(msg) < length:
+			callback_fn = [zero, noise]
+			fn = random.choice(callback_fn)
+			msg += fn()
 		return msg[:length]	
 def main():
 	import doctest
