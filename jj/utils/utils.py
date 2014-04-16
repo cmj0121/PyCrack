@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #! coding: utf-8
 
-from conf import DEFAULT_CONF as _C
+from ..conf import DEFAULT_CONF as _C
 import sys
 
 def regMethod(name=""):
