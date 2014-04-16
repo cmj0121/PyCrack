@@ -66,18 +66,19 @@ def interact(PS1, PS2, BANNER, *arg, **kwarg):
 		
 		print "Goodbye..."
 
-	## Change PS
-	sys.ps1, sys.ps2 = PS1, PS2
-	delims = readline.get_completer_delims().replace('/','')
-	readline.set_completer_delims(delims)
-	readline.set_completer(Completer)
-
 	## Compatible for Mac OS since Mac OS ship libedit for readline
 	if "libedit" in readline.__doc__:
 		import rlcompleter
 		readline.parse_and_bind("bind ^I rl_complete")
 	else:
 		readline.parse_and_bind("tab: complete")
+
+	## Change PS
+	sys.ps1, sys.ps2 = PS1, PS2
+	delims = readline.get_completer_delims().replace('/','')
+	readline.set_completer_delims(delims)
+	readline.set_completer(Completer)
+
 
 	## Run Interpreter
 	code.interact(banner=BANNER, local=globals())
