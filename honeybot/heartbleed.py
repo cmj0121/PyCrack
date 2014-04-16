@@ -4,13 +4,14 @@
 import struct
 import socket
 import sys
+import time
 import traceback
 import os
 
 class Logging(object):
 	def dumpPackage(self, session, package, fd):
 		""" Dump package contain in pretty format """
-		session = "==== %s ====\n" %session
+		session = "[%s] ==== %s ====\n" %(time.ctime(), session)
 		fd.write(session)
 		for _ in xrange(0, len(package), 16):
 			tmp = [c for c in package[_:_+16]]
@@ -21,7 +22,7 @@ class Logging(object):
 		fd.flush()
 	def accessLog(self, addr, fd):
 		""" Record the access log """
-		fd.write("Try to access TLS HeartBleed from [%s]\n" %str(addr))
+		fd.write("[%s] Try to access TLS HeartBleed from [%s]\n" %(time.ctime(), str(addr)))
 		fd.flush()
 class TLS(Logging):
 	"""
