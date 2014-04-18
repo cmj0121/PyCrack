@@ -23,7 +23,7 @@ class INFO(Dispatch, WebBase):
 	True
 
 	>>> ret = info.serType("www.google.com", 8160, 80)["server"]
-	>>> ret["Server"]
+	>>> print ret["Server"]
 	sffe
 	"""
 	def __init__(self):

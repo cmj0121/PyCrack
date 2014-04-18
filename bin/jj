@@ -9,4 +9,4 @@ except ImportError as e:
 	import jj
 
 import sys
-exit(jj.dispatch(*sys.argv[1:], **jj.conf.DEFAULT_CONF))
+exit(jj.dispatch(*sys.argv[1:], **jj.utils.DEFAULT_CONF))

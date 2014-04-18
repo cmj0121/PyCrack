@@ -84,5 +84,4 @@ def interact(PS1, PS2, BANNER, *arg, **kwarg):
 	code.interact(banner=BANNER, local=globals())
 
 if __name__ == "__main__":
-	from jj.conf import DEFAULT_CONF as _C
-	interact(**_C)
+	interact(**utils.DEFAULT_CONF)

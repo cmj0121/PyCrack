@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #! coding: utf-8
 
-from ..conf import DEFAULT_CONF as _C
+from conf import DEFAULT_CONF as _C
 import sys
 
 def regMethod(name=""):
@@ -156,8 +156,13 @@ class Dispatch(object):
 		""" Run dispatch runtine """
 		import traceback
 
-		if not arg: return self.helpMsg(*arg, **kwarg)
-
+		arg, kwarg = self.optParse(arg, kwarg)
+		if 0 == len(arg):
+			if "*" in self.callback_fn:
+				kwarg["RAW_DATA"] = self.callback_fn["*"]["fn"](*arg, **kwarg)
+				return self.showResult(**kwarg)
+			else:
+				return self.helpMsg(*arg, **kwarg)
 		for _ in self.callback_fn:
 			if _ == arg[0]:
 				if kwarg["DEBUG"]:
@@ -172,8 +177,8 @@ class Dispatch(object):
 					else:
 						return self.showResult(**kwarg)
 		else:
-			if "" in self.callback_fn:
-				kwarg["RAW_DATA"] = self.callback_fn[""]["fn"](*arg, **kwarg)
+			if "*" in self.callback_fn:
+				kwarg["RAW_DATA"] = self.callback_fn["*"]["fn"](*arg, **kwarg)
 				return self.showResult(**kwarg)
 			else:
 				return self.helpMsg(*arg, **kwarg)
@@ -182,16 +187,24 @@ class Dispatch(object):
 			"fn": callback_fn, "help": help }
 		})
 		return self
-	@regMethod('test')
+	@regMethod('doctest')
 	def test(self, *arg, **kwarg):
 		""" Run doctest """
 		import doctest
-		from jj import conf, info, jpython
+		import jj
+		import types
 
-		_MODULE_ = (conf, info, jpython)
-		print "Run doctest... ",
+		_MODULE_ = (getattr(jj, _) for _ in dir(jj))
+		_MODULE_ = (_ for _ in _MODULE_ if isinstance(_, types.ModuleType))
+		print "Run doctest... "
+		print ("  Test %s " %("self" + "."*30)),
 		doctest.testmod()
-		for _ in _MODULE_: doctest.testmod(_)
+		print " Done"
+
+		for _ in _MODULE_:
+			print ("  Test %s " %(_.__name__ + "."*(34-len(_.__name__)))),
+			doctest.testmod(_)
+			print " Done"
 		print "Success!"
 	def helpMsg(self, *arg, **kwarg):
 		""" Show help message """
@@ -202,7 +215,7 @@ class Dispatch(object):
 		MAXLEN = MAXLEN + len(kwarg["CURRENT_CMD"]) + 2
 
 		for _ in sorted(self.callback_fn.keys()):
-			cmd = "{CURRENT_CMD} {0} ".format(_, **kwarg)
+			cmd = "{CURRENT_CMD} {0} ".format(_ if "*" != _ else "", **kwarg)
 			FORMAT = "  {0:<{3}} {1:<16} {2}"
 			FORMAT = FORMAT.format(cmd, "[TARGET]", self.callback_fn[_]["help"], MAXLEN)
 			print FORMAT
@@ -212,6 +225,29 @@ class Dispatch(object):
 		sys.exit(1)
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
 		""" Show result """
-		if "raw" == PRETTY: print rawData
+		print RAW_DATA
 		return 0
+	def optParse(self, arg, kwarg):
+		""" Optional Parser """
+		ret = []
+		while arg:
+			_, arg = arg[0], arg[1:]
+			if _ in ("-q", "--quite"):
+				kwarg["QUITE"] = True
+			elif _ == "--force":
+				kwarg["FORMAT"] = True
+			elif _ in ("-D", "--debug"):
+				kwarg["DEBUG"] = True
+			elif _ in ("-v", "-vv", "-vvv"):
+				if kwarg["VERBOUS"]:
+					raise SystemError("Multiple verbose options")
+				kwarg["VERBOUS"] = _.count("v")
+			elif _ == "-d":
+				if not arg: raise SystemError("Missing value for -d")
+				arg, kwarg["DEPTH"] = arg[1:], arg[0]
+			elif _.startswith("--depth="):
+				kwarg["DEPTH"] = _[len("--depth"):]
+			else:
+				ret += [_]
+		return ret, kwarg
 
