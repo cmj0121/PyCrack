@@ -1,30 +1,19 @@
-# Argument Parser #
-Input <= sys.argv
-	>>> for _ in argv
-Output => arg, kwarg
+# PyCrack
 
-# Command Format #
-## jPython
-	jpython		Customize Python intepreter
+Python Utils tool for self-use. It will contains lots of tools for me that
+will be used on the web-world.
 
-## DartBoard ##
-	* Dart		Active send network packet into target
-		- *PORT*	Assign scan port
-		- TCP/UDP	Assign protocol
-	* Board		Positive receive the network packet responsed from target
-		- *.filter
+# Functions
+
+## jPython ##
+	* jpython	Customize Python intepreter which contains auto-complete.
 
 ## Web scanner ##
 	* cms		CMS detector
-	* form		Get *FORM* parameter
 	* geo		Geographical getter
 	* info		Basic web information getter
-		- domain	Domain name
-		- fav		favicon.ico
-		- index		Scan type of index page
-		- js		JS library
-		- robots	Robots.txt getter
-	* url		Sensitive URL scanner
+
+## CVE
 
 ## Global parameter ##
 	* -d, --depth	(int)	Recursive Run with result
@@ -34,4 +23,3 @@ Output => arg, kwarg
 	* -j, --jobs	(int)	Run with multi-processer
 	* -q, --quite			No stdout message
 	* -v, -vv, -vvv			Verbous mode: [pretty, verbose, detail, raw data]
-
