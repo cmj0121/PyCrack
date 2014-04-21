@@ -157,7 +157,6 @@ class Dispatch(object):
 		import traceback
 
 		arg, kwarg = self.optParse(arg, kwarg)
-		print kwarg["FORCE"]
 		if 0 == len(arg):
 			if "*" in self.callback_fn:
 				kwarg["RAW_DATA"] = self.callback_fn["*"]["fn"](*arg, **kwarg)

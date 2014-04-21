@@ -78,7 +78,6 @@ class CVE(Dispatch, WebBase):
 			return []
 	def lastCVE(self, FORCE, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the last CVE record """
-		print "FORCE: %s" %FORCE
 		cve = self.LoadCVE(force=FORCE)[-3]
 		path = self.LAST_CVE_PATH.format(home=home)
 		with open(path, 'w') as f:
