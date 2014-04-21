@@ -59,7 +59,7 @@ class CVE(Dispatch, WebBase):
 	@regMethod('search')
 	def search(self, *arg, **kwarg):
 		if 2 <= kwarg["VERBOUS"]: print "Search %s" %str(arg)
-		if 0 == len(arg): return self.lastCVE()
+		if 0 == len(arg): return self.lastCVE(*arg, **kwarg)
 		else:
 			raise NotImplementedError("Not Implement")
 	@regMethod('upgrade')
@@ -69,16 +69,17 @@ class CVE(Dispatch, WebBase):
 		with open(path) as f:
 			last_cve = f.read()
 			_, year, last_nr = last_cve.split('-')
-		cve = self.lastCVE(force=True)
+		cve = self.lastCVE(FORCE=True)
 		_, year, nr = cve.keys()[0].split('-')
 		if nr>last_nr:
 			return ["CVE-{year}-{nr}".format(year=year, nr=_)
 					for _ in range(last_nr, nr+1)]
 		else:
 			return []
-	def lastCVE(self, force=False, home=os.path.expanduser('~'), *arg, **kwarg):
+	def lastCVE(self, FORCE, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the last CVE record """
-		cve = self.LoadCVE(force=force)[-3]
+		print "FORCE: %s" %FORCE
+		cve = self.LoadCVE(force=FORCE)[-3]
 		path = self.LAST_CVE_PATH.format(home=home)
 		with open(path, 'w') as f:
 			f.write(cve.keys()[0])

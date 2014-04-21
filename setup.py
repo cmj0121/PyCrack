@@ -6,7 +6,7 @@ try:
 except ImportError:
 	print "Cannot import setuptools, try distutils.core"
 	from distutils.core import setup
-	def find_packages(): return ["jj"]
+	def find_packages(): return ["jj", "jj/utils"]
 
 from jj.utils import DEFAULT_CONF as _C
 
