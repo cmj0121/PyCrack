@@ -16,11 +16,11 @@ class CVE(Dispatch, WebBase):
 	>>> if ret: print "Load CVE Success"
 	Load CVE Success
 
-	>>> ret = cve.lastCVE()
+	>>> ret = cve.lastCVE(False)
 	>>> if ret: print "Load CVE Success"
 	Load CVE Success
 
-	>>> cve.lastCVE() == cve[-1]
+	>>> cve.lastCVE(False) == cve[-1]
 	True
 
 	>>> cve.upgraceCVE()
@@ -78,13 +78,14 @@ class CVE(Dispatch, WebBase):
 			return []
 	def lastCVE(self, FORCE, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the last CVE record """
-		cve = self.LoadCVE(force=FORCE)[-3]
+		cve = self.LoadCVE(force=FORCE)[-1]
 		path = self.LAST_CVE_PATH.format(home=home)
 		with open(path, 'w') as f:
 			f.write(cve.keys()[0])
 		return cve
 	def LoadCVE(self, year=None, fmt="yaml", force=False, *arg, **kwarg):
 		""" Load CVE List for particular Year """
+
 		if not year: year = time.gmtime().tm_year
 		path = self._CVEPath_(year, fmt=fmt)
 		if force or not os.path.exists(path): self.UpdateCVE(year, fmt=fmt)
@@ -99,6 +100,11 @@ class CVE(Dispatch, WebBase):
 			cve = json.loads(cve)
 		else:
 			raise TypeError("Cannot Load CVE with fmt: %s" %fmt)
+
+		## Parse and filter out the CVE List
+		cve = [_ for _ in cve if "REJECT" not in _[_.keys()[0]]['Notes']["Description"]]
+		cve = [_ for _ in cve if "RESERVED" not in _[_.keys()[0]]['Notes']["Description"]]
+		cve = sorted(cve, key=lambda x: (x.keys()[0], x[x.keys()[0]]["Notes"]["Published"])) 
 		return cve
 	def UpdateCVE(self, year, fmt):
 		""" Update CVE from cve.mitre.org """
