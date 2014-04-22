@@ -105,7 +105,7 @@ class INFO(Dispatch, WebBase):
 						if re.match(token, _, re.UNICODE)]
 		return ret
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
-		if "raw" == PRETTY: print rawData
+		if "raw" == PRETTY: print RAW_DATA
 		elif not isinstance(RAW_DATA, dict):
 			raise SystemError("Not valid type (%s) for RAW_DATA" %type(RAW_DATA))
 		elif "pretty" == PRETTY:

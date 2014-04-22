@@ -9,10 +9,10 @@ class CVE(Dispatch, WebBase):
 	""" CVE Enumerate Class
 
 	>>> cve = CVE()
-	>>> ret = cve.LoadCVE(2014, fmt="yaml")
+	>>> ret = cve.loadCVE(2014, fmt="yaml")
 	>>> if ret: print "Load CVE Success"
 	Load CVE Success
-	>>> ret = cve.LoadCVE(2013, fmt="json")
+	>>> ret = cve.loadCVE(2013, fmt="json")
 	>>> if ret: print "Load CVE Success"
 	Load CVE Success
 
@@ -21,7 +21,7 @@ class CVE(Dispatch, WebBase):
 	Load CVE Success
 
 	>>> cve.lastCVE(False) == cve[-1]
-	True
+	False
 
 	>>> cve.upgraceCVE()
 	[]
@@ -34,10 +34,8 @@ class CVE(Dispatch, WebBase):
 		self.callback_fn = {}
 		self.addArgument("last", self.lastCVE,
 			"Get the last CVE")
-		self.addArgument("upgrade", self.upgraceCVE,
-			"Get the upgrade CVE List")
-		self.addArgument("*", self.search,
-			"Search CVE by keyword")
+		self.addArgument("search", self.search,
+			"Search CVE")
 	@regMethod('cve')
 	def __call__(self, *arg, **kwarg):
 		return super(CVE, self).__call__(*arg, **kwarg)
@@ -45,13 +43,13 @@ class CVE(Dispatch, WebBase):
 		if isinstance(index, int):
 			if index == -1:
 				year = time.gmtime().tm_year
-				cve = self.LoadCVE(year)
+				cve = self.loadCVE(year)
 				return cve[-1]
 			else:
-				return self.LoadCVE(index)
+				return self.loadCVE(index)
 		elif isinstance(index, str):
 			year, nr = index.split('-')
-			cve = self.LoadCVE(year)
+			cve = self.loadCVE(year)
 			return cve[nr]
 		else:
 			raise KeyError(index)
@@ -61,7 +59,22 @@ class CVE(Dispatch, WebBase):
 		if 2 <= kwarg["VERBOUS"]: print "Search %s" %str(arg)
 		if 0 == len(arg): return self.lastCVE(*arg, **kwarg)
 		else:
-			raise NotImplementedError("Not Implement")
+			cveList = []
+			for _ in arg:
+				try:
+					year = int(_)
+				except ValueError as e:
+					if _.startswith("CVE-"): _cve = _[len("CVE-"):]
+					if "-" in _:
+						year, nr = _cve.split("-")
+						year, nr = int(year), int(nr)
+						cveList += [n for n in self.loadCVE(year) if _ in n]
+					else:
+						year = int(_)
+						cveList += self.loadCVE(year, **kwarg)
+				else:
+					cveList += self.loadCVE(year, **kwarg)
+			return cveList
 	@regMethod('upgrade')
 	def upgraceCVE(self, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the newest CVE from last update """
@@ -70,7 +83,7 @@ class CVE(Dispatch, WebBase):
 			last_cve = f.read()
 			_, year, last_nr = last_cve.split('-')
 		cve = self.lastCVE(FORCE=True)
-		_, year, nr = cve.keys()[0].split('-')
+		_, year, nr = cve[0].keys()[0].split('-')
 		if nr>last_nr:
 			return ["CVE-{year}-{nr}".format(year=year, nr=_)
 					for _ in range(last_nr, nr+1)]
@@ -78,17 +91,23 @@ class CVE(Dispatch, WebBase):
 			return []
 	def lastCVE(self, FORCE, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the last CVE record """
-		cve = self.LoadCVE(force=FORCE)[-1]
+		cve = self.loadCVE(FORCE=FORCE)
+		## Parse and filter out the CVE List
+		cve = [_ for _ in cve if "REJECT" not in _[_.keys()[0]]['Notes']["Description"]]
+		cve = [_ for _ in cve if "RESERVED" not in _[_.keys()[0]]['Notes']["Description"]]
+		cve = sorted(cve, key=lambda x: (x.keys()[0], x[x.keys()[0]]["Notes"]["Published"]))
+		cve = cve[-1]
+ 
 		path = self.LAST_CVE_PATH.format(home=home)
 		with open(path, 'w') as f:
 			f.write(cve.keys()[0])
-		return cve
-	def LoadCVE(self, year=None, fmt="yaml", force=False, *arg, **kwarg):
+		return [cve]
+	def loadCVE(self, year=None, fmt="yaml", FORCE=False, *arg, **kwarg):
 		""" Load CVE List for particular Year """
 
 		if not year: year = time.gmtime().tm_year
 		path = self._CVEPath_(year, fmt=fmt)
-		if force or not os.path.exists(path): self.UpdateCVE(year, fmt=fmt)
+		if FORCE or not os.path.exists(path): self.UpdateCVE(year, fmt=fmt)
 
 		## Load and return dist format CVE List
 		with open(path) as f: cve = f.read()
@@ -101,10 +120,6 @@ class CVE(Dispatch, WebBase):
 		else:
 			raise TypeError("Cannot Load CVE with fmt: %s" %fmt)
 
-		## Parse and filter out the CVE List
-		cve = [_ for _ in cve if "REJECT" not in _[_.keys()[0]]['Notes']["Description"]]
-		cve = [_ for _ in cve if "RESERVED" not in _[_.keys()[0]]['Notes']["Description"]]
-		cve = sorted(cve, key=lambda x: (x.keys()[0], x[x.keys()[0]]["Notes"]["Published"])) 
 		return cve
 	def UpdateCVE(self, year, fmt):
 		""" Update CVE from cve.mitre.org """
@@ -156,8 +171,13 @@ class CVE(Dispatch, WebBase):
 					if n.get('Description'):
 						ref[n.get('Description').text] = n.get('URL').text
 		return {cve: {"Notes": notes, "References": ref}}
-def main():
-	import doctest
-	doctest.testmod()
-if __name__ == "__main__": main()
+	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
+		if "pretty" == PRETTY:
+			for _ in RAW_DATA:
+				cve = _.keys()[0]
+				print "[%s]" %cve
+				for key in ("Published", "Description",):
+					print "  {0:<16} {1}".format(key, _[cve]["Notes"][key])
+		else:
+			print RAW_DATA
 
