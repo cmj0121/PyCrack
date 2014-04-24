@@ -174,6 +174,9 @@ class Dispatch(object):
 					except Exception as e:
 						print "Get Exception: %s" %e
 						sys.exit(1)
+					except KeyboardInterrupt as e:
+						print "KeyboardInterrupt"
+						sys.exit(1)
 					else:
 						return self.showResult(**kwarg)
 		else:

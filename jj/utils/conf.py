@@ -52,6 +52,16 @@ DEFAULT_CONF["ENCODE"]		= "utf-8"	## --encode=
 DEFAULT_CONF["FORCE"]		= False		## --force
 
 ## CMS detection
-DEFAULT_CONF["CMS_FILTER"]	= [r"<meta\s+.*?content=[\"'](.*?)['\"].*?/>"]
-DEFAULT_CONF["CMS_TOKEN"]	= [r"Discuz!\s?\S?[0-9.]+"]
+DEFAULT_CONF["CMS_FILTER"]	= [
+	r"<meta\s+name=[\"']generator[\"']\s+content=[\"'](.*?)['\"].*?/?>",## General contain for metadata
+	r"<script.*?src=[\"'].*?(jquery.*?.js)['\"].*?>",					## Using JS script
+	r"Powered by (.*?) ",												## Powered by
+	r"['\"]([^\"']*\.css)[\"']",										## CSS style
+	]
+DEFAULT_CONF["CMS_TOKEN"]	= [
+	r"Discuz!\s?\S?[0-9.]+",			## Discuz
+	r"jquery(?:-?(?:\d*.)*\d*)?.js",	## jQuery
+	r"No-CMS",							## NO-CMS
+	r"CMSimple",						## CMSimple
+	]
 

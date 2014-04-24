@@ -28,7 +28,7 @@ class INFO(Dispatch, WebBase):
 	"""
 	def __init__(self):
 		self.callback_fn = {}
-		self.addArgument("", self.info,
+		self.addArgument("*", self.info,
 			help="Default information scan")
 		self.addArgument("geo", self.geo,
 			help="Get geographic information")
@@ -105,6 +105,8 @@ class INFO(Dispatch, WebBase):
 						if re.match(token, _, re.UNICODE)]
 		return ret
 	def showResult(self, RAW_DATA, PRETTY, *arg, **kwarg):
+		import sys
+
 		if "raw" == PRETTY: print RAW_DATA
 		elif not isinstance(RAW_DATA, dict):
 			raise SystemError("Not valid type (%s) for RAW_DATA" %type(RAW_DATA))
@@ -120,7 +122,9 @@ class INFO(Dispatch, WebBase):
 					u"{0:<10} {Server}"
 				print FORMAT.format("Server", **RAW_DATA["server"])
 			if "cms" in RAW_DATA and RAW_DATA["cms"]:
-				print u"{0:<10} {1}".format("CMS", ", ".join(RAW_DATA["cms"]))
+				print u"{0:<10}    ".format("CMS")
+				for _ in RAW_DATA["cms"]:
+					print u"{0:<10} {1}".format("", _)
 		else: raise NotImplementedError("Not support format: %s" %PRETTY)
-		return 0
+		sys.exit(0)
 
