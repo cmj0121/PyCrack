@@ -50,6 +50,8 @@ DEFAULT_CONF["BUFSIZ"]		= 8196		## --bufsiz=
 DEFAULT_CONF["PORT"]		= 80		## -p, --port=80
 DEFAULT_CONF["ENCODE"]		= "utf-8"	## --encode=
 DEFAULT_CONF["FORCE"]		= False		## --force
+DEFAULT_CONF["SIZE"]		= 0			## -s, --size=
+DEFAULT_CONF["OFFSET"]		= 0			## --offset=
 
 ## CMS detection
 DEFAULT_CONF["CMS_FILTER"]	= [

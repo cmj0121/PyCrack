@@ -74,7 +74,10 @@ class CVE(Dispatch, WebBase):
 						cveList += self.loadCVE(year, **kwarg)
 				else:
 					cveList += self.loadCVE(year, **kwarg)
-			return cveList
+
+			SIZE, OFFSET = kwarg["SIZE"], kwarg["OFFSET"]
+			if SIZE: return cveList[OFFSET: OFFSET+SIZE]
+			else: return cveList[OFFSET:]
 	@regMethod('upgrade')
 	def upgraceCVE(self, home=os.path.expanduser('~'), *arg, **kwarg):
 		""" Get the newest CVE from last update """
@@ -177,7 +180,10 @@ class CVE(Dispatch, WebBase):
 				cve = _.keys()[0]
 				print "[%s]" %cve
 				for key in ("Published", "Description",):
-					print "  {0:<16} {1}".format(key, _[cve]["Notes"][key])
+					try:
+						print "  {0:<16} {1}".format(key, _[cve]["Notes"][key])
+					except KeyError as e:
+						continue
 		else:
 			print RAW_DATA
 

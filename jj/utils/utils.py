@@ -247,9 +247,15 @@ class Dispatch(object):
 				kwarg["VERBOUS"] = _.count("v")
 			elif _ == "-d":
 				if not arg: raise SystemError("Missing value for -d")
-				arg, kwarg["DEPTH"] = arg[1:], arg[0]
+				arg, kwarg["DEPTH"] = arg[1:], int(arg[0])
 			elif _.startswith("--depth="):
-				kwarg["DEPTH"] = _[len("--depth"):]
+				kwarg["DEPTH"] = _[len("--depth="):]
+			elif _ == "-s":
+				kwarg["SIZE"],arg = int(arg[0]), arg[1:]
+			elif _.startswith("--size="):
+				kwarg["SIZE"] = int(_[len("--size="):])
+			elif _.startswith("--offset="):
+				kwarg["OFFSET"] = int(_[len("--offset="):])
 			else:
 				ret += [_]
 		return ret, kwarg
