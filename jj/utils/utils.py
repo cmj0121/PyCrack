@@ -4,6 +4,7 @@
 from conf import DEFAULT_CONF as _C
 import sys
 
+## Useful function
 def regMethod(name=""):
 	"""	Register function into CURRENT_CMD
 	>>> def foo(CURRENT_CMD):
@@ -62,41 +63,70 @@ def IPParse(ip, DEBUG=True):
 	True
 	>>> len(IPParse("127.0.0.1/31"))
 	2
-	>>> "127.0.0.2" in IPParse("127.0.0.1/31")
+	>>> "127.0.0.0" in IPParse("127.0.0.1/31")
 	True
 	>>> ret = IPParse("192.168.17.0-192.168.17.10")
 	>>> 11 == len(ret)
 	True
 	>>> "192.168.17.5" == ret[5]
 	True
+
+	>>> 1 == len(IPParse('random'))
+	True
+	>>> 2**2 == len(IPParse('random/30'))
+	True
+	>>> 30 == len(IPParse('random:30'))
+	True
 	"""
+	from random import randint
 	import re
 	import socket
 	from struct import pack, unpack
+	def MaskIP(ip, mask):
+		""" Generate IP range by mask """
+		mask  = 32 - int(mask)
+		start = unpack(">I", socket.inet_aton(ip))[0]
+		start = start & (2**32-1 ^ int("1"*mask, 2))
+		ips   = [pack(">I",_+start) for _ in xrange(2**mask)]
+		return [socket.inet_ntoa(_) for _ in ips]
+		
+		
 
+	randomIP = lambda: ".".join(str(randint(0, 255)) for _ in range(4))
 	try:
-		IPFormat = r"(\d+)\.(\d+)\.(\d+)\.(\d+)"
-		IPFormat = r"^{0}(?:(?:/(\d+))|(?:-{0}))?$".format(IPFormat)
-		ret = re.match(IPFormat, ip).groups()
-		ipStart, mask, ipEnd = ret[:4], ret[4], ret[5:]
-		ipStart = ".".join([str(_) for _ in ipStart])
-		ipEnd = ".".join([str(_) for _ in ipEnd if _])
+		if ip.startswith("random"):
+			IPFormat = r"^random(?:(?:/(\d+)|(?:\:(\d+))))?$"
+			mask, num = re.match(IPFormat, ip).groups()
 
-		if mask:
-			mask = 32 - int(mask)
-			start = unpack(">I", socket.inet_aton(ipStart))[0]
-			ips   = [pack(">I",_+start) for _ in xrange(2**mask)]
-			return [socket.inet_ntoa(_) for _ in ips]
-		elif ipEnd:
-			start = unpack(">I", socket.inet_aton(ipStart))[0]
-			end   = unpack(">I", socket.inet_aton(ipEnd))[0]
-			ips   = [pack(">I",_) for _ in xrange(start, end+1)]
-			return [socket.inet_ntoa(_) for _ in ips]
+			if mask:
+				return MaskIP(randomIP(), mask)
+			elif num:
+				return [randomIP() for _ in range(int(num))]
+			else:
+				return [randomIP()]
 		else:
-			return [ipStart]
+			IPFormat = r"(\d+)\.(\d+)\.(\d+)\.(\d+)"
+			IPFormat = r"^{0}(?:(?:/(\d+))|(?:-{0}))?$".format(IPFormat)
+
+			ret = re.match(IPFormat, ip).groups()
+			ipStart, mask, ipEnd = ret[:4], ret[4], ret[5:]
+			ipStart = ".".join([str(_) for _ in ipStart])
+			ipEnd = ".".join([str(_) for _ in ipEnd if _])
+
+			if mask:
+				return MaskIP(ipStart, mask)
+			elif ipEnd:
+				start = unpack(">I", socket.inet_aton(ipStart))[0]
+				end   = unpack(">I", socket.inet_aton(ipEnd))[0]
+				ips   = [pack(">I",_) for _ in xrange(start, end+1)]
+				return [socket.inet_ntoa(_) for _ in ips]
+			else:
+				return [ipStart]
 	except Exception as e:
 		if DEBUG: print e
 		return ()
+
+## Pseudo Class
 class Target(object):
 	""" Pseudo object for target
 		>>> t = Target("cmj.tw")
