@@ -55,7 +55,48 @@ def clearPyc():
 	ret = [_ for _ in os.popen(cmd).read().split('\n') if _]
 	for _ in ret:
 		os.unlink(_)
+def IPParse(ip, DEBUG=True):
+	"""
+	IP range Parse
+	>>> ["127.0.0.1"] == IPParse("127.0.0.1")
+	True
+	>>> len(IPParse("127.0.0.1/31"))
+	2
+	>>> "127.0.0.2" in IPParse("127.0.0.1/31")
+	True
+	>>> ret = IPParse("192.168.17.0-192.168.17.10")
+	>>> 11 == len(ret)
+	True
+	>>> "192.168.17.5" == ret[5]
+	True
+	"""
+	import re
+	import socket
+	from struct import pack, unpack
 
+	try:
+		IPFormat = r"(\d+)\.(\d+)\.(\d+)\.(\d+)"
+		IPFormat = r"^{0}(?:(?:/(\d+))|(?:-{0}))?$".format(IPFormat)
+		ret = re.match(IPFormat, ip).groups()
+		ipStart, mask, ipEnd = ret[:4], ret[4], ret[5:]
+		ipStart = ".".join([str(_) for _ in ipStart])
+		ipEnd = ".".join([str(_) for _ in ipEnd if _])
+
+		if mask:
+			mask = 32 - int(mask)
+			start = unpack(">I", socket.inet_aton(ipStart))[0]
+			ips   = [pack(">I",_+start) for _ in xrange(2**mask)]
+			return [socket.inet_ntoa(_) for _ in ips]
+		elif ipEnd:
+			start = unpack(">I", socket.inet_aton(ipStart))[0]
+			end   = unpack(">I", socket.inet_aton(ipEnd))[0]
+			ips   = [pack(">I",_) for _ in xrange(start, end+1)]
+			return [socket.inet_ntoa(_) for _ in ips]
+		else:
+			return [ipStart]
+	except Exception as e:
+		if DEBUG: print e
+		return ()
 class Target(object):
 	""" Pseudo object for target
 		>>> t = Target("cmj.tw")
