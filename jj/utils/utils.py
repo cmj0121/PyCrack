@@ -125,6 +125,27 @@ def IPParse(ip, DEBUG=True):
 	except Exception as e:
 		if DEBUG: print e
 		return ()
+def Logs(fn):
+	""" Log any traceback when execute """
+	from time import strftime
+	from os.path import basename
+
+	fmt = "[{time} {file_name:>8}#L:{line:<04}] {msg}\n"
+	def wrapper(*args, **kwargs):
+		try:
+			return fn(*args, **kwargs)
+		except Exception as e:
+			tb = sys.exc_info()[2]
+			param = {"line": tb.tb_lineno,
+					"file_name": basename(tb.tb_frame.f_code.co_filename),
+					"time": strftime("%Y-%m-%d %H:%M:%S"),
+					"msg": e}
+			with open("./Exception.log", "a") as f:
+				msg = fmt.format(**param)
+				print msg
+				f.write(msg)
+			raise e
+	return wrapper
 
 ## Pseudo Class
 class Target(object):
