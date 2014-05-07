@@ -102,13 +102,11 @@ class TimerFD(object):
 	"""
 	def __init__(self, shardLib=None):
 		platform = os.uname()[0]
-		if "Darwin" == platform: shardLib = "libc.dylib"
-		elif "Linux" == platform: shardLib = "libc.so.6"
+		if "Linux" == platform: shardLib = "libc.so.6"
 		else:
 			raise TimerFDError("Not Support Platform %s")
 
 		self.libc = cdll.LoadLibrary(shardLib)
-		self.platform = platform
 
 	def getTimer(self, start=1, interval=1):
 		""" Easy way to get the timer fd """
