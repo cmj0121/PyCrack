@@ -88,12 +88,27 @@ class TimerFDError(Exception):
 class TimerFD(object):
 	""" A timer fd (File Descriptor) which is wrapped via ctypes
 
+	>>> import time
 	>>> timer = TimerFD()
-	>>> fd = timer.create()
+	>>> for n in range(1, 4):
+	... 	fd = timer.getTimer(interval=n)
+	... 	ret = fd.read()
+	... 	start = time.time()
+	... 	ret = fd.read()
+	... 	end = time.time()
+	... 	if abs((end-start) - n)>0.01:
+	... 		print "Faild on %s: %s" %(n, abs(n-(end-start)))
 	
 	"""
-	def __init__(self, shardLib="libc.so.6"):
+	def __init__(self, shardLib=None):
+		platform = os.uname()[0]
+		if "Darwin" == platform: shardLib = "libc.dylib"
+		elif "Linux" == platform: shardLib = "libc.so.6"
+		else:
+			raise TimerFDError("Not Support Platform %s")
+
 		self.libc = cdll.LoadLibrary(shardLib)
+		self.platform = platform
 
 	def getTimer(self, start=1, interval=1):
 		""" Easy way to get the timer fd """
@@ -136,3 +151,6 @@ class TimerFD(object):
 		return self.libc.timerfd_gettime(fd,
 			pointer(timeSpec) if timeSpec else None, None )
 
+if __name__ == "__main__":
+	import doctest
+	doctest.testmod()
