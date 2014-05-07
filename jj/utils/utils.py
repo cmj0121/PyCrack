@@ -146,7 +146,7 @@ def Logs(fileName=None):
 				with open(fileName, "a") as f:
 					msg = fmt.format(**param)
 					f.write(msg)
-				raise e
+				raise
 		return wrapper
 	return log
 

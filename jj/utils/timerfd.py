@@ -59,8 +59,8 @@ class TimerFile(file):
 			pass
 	def close(self):
 		os.close(self.fd)
-	def read(self, bufsiz=4096):
-		return os.read(self.fd, bufsiz)
+	def read(self):
+		return os.read(self.fd, 4096)
 	def fileno(self):
 		return self.fd
 	def next(self):
@@ -94,6 +94,13 @@ class TimerFD(object):
 	"""
 	def __init__(self, shardLib="libc.so.6"):
 		self.libc = cdll.LoadLibrary(shardLib)
+
+	def getTimer(self, start=1, interval=1):
+		""" Easy way to get the timer fd """
+		fd  = self.create()
+		its = iTimerSpec(TimeSpec(interval, 0), TimeSpec(start, 0))
+		self.settime(fd, 0, its, None)
+		return fd
 	def create(self, clockid=CLOCK_REALTIME, flags=0):
 		timerfd_create = self.libc.timerfd_create
 		timerfd_create.argtypes = [c_int, c_int]
@@ -101,7 +108,7 @@ class TimerFD(object):
 
 		fd = timerfd_create(clockid, flags)
 		return TimerFile(fd)
-	def settime(self, fd, flags, newTimeSpec, oldTimeSpec, START_FROM_NOW=False):
+	def settime(self, fd, flags, newTimeSpec, oldTimeSpec):
 		if isinstance(fd, int): fd = fd
 		elif isinstance(fd, file): fd = fd.fileno()
 		else: raise TypeError("fd only accept File or File Descriptors")
@@ -115,15 +122,6 @@ class TimerFD(object):
 		timerfd_settime.argtypes = [c_int, c_int, POINTER(iTimerSpec), POINTER(iTimerSpec)]
 		timerfd_settime.restype  = c_int
 
-		if START_FROM_NOW:
-			clock_gettime = libc.clock_gettime
-			clock_gettime.argtypes = [c_int, POINTER(TimeSpec)]
-			clock_gettime.restype  = c_int
-
-			now = TimeSpec()
-			if 0 > clock_gettime(CLOCK_MONOTONIC, byref(now)):
-				raise TimerFDError("Cannot get the current time")
-			newTimeSpec.it_value += now
 		return timerfd_settime(fd, flags,
 			pointer(newTimeSpec) if newTimeSpec else None,
 			byref(oldTimeSpec) if oldTimeSpec else None )
