@@ -111,7 +111,8 @@ class TimerFD(object):
 	def getTimer(self, start=1, interval=1):
 		""" Easy way to get the timer fd """
 		fd  = self.create()
-		its = iTimerSpec(TimeSpec(interval, 0), TimeSpec(start, 0))
+		x, y = int(interval), int((interval-int(interval))*(10**9))
+		its = iTimerSpec(TimeSpec(x, y), TimeSpec(start, 0))
 		self.settime(fd, 0, its, None)
 		return fd
 	def create(self, clockid=CLOCK_REALTIME, flags=0):
