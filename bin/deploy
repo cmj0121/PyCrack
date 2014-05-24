@@ -1,6 +1,0 @@
-./setup.py build
-ret=$?
-if [ "$ret" != 0 ]; then exit $ret; fi
-sudo ./setup.py install
-
-# vim: filetype=sh 
