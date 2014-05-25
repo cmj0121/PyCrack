@@ -17,6 +17,7 @@ import os
 import sys
 from jj import utils
 
+sys.path = [""] + sys.path
 ## Match for prefix
 def global_matches(text):
 	"""
